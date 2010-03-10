@@ -291,7 +291,33 @@ namespace log4net.Appender
 			get { return m_maxSizeRollBackups; }
 			set { m_maxSizeRollBackups = value; }
 		}
-  
+
+		/// <summary>
+		/// Gets or sets the maximum number of backup files that are kept before
+		/// the oldest is erased.
+		/// </summary>
+		/// <value>
+		/// The maximum number of backup files that are kept before the oldest is
+		/// erased.
+		/// </value>
+		/// <remarks>
+		/// <para>
+		/// If set to zero, then there will be no backup files and the log file 
+		/// will be truncated when it reaches <see cref="MaxFileSize"/>.  
+		/// </para>
+		/// <para>
+		/// If a negative number is supplied then no deletions will be made.  Note 
+		/// that this could result in very slow performance as a large number of 
+		/// files are rolled over unless <see cref="CountDirection"/> is used.
+		/// </para>
+		/// <para>Added by Joshua Masek of RoviSys - see http://issues.apache.org/jira/browse/LOG4NET-27</para>
+		/// </remarks>
+		public int MaxDateRollBackups
+		{
+			get { return m_maxDateRollBackups; }
+			set { m_maxDateRollBackups = value; }
+		}
+
 		/// <summary>
 		/// Gets or sets the maximum size that the output file is allowed to reach
 		/// before being rolled over to backup files.
@@ -1049,7 +1075,93 @@ namespace log4net.Appender
 	  
 				RollFile(File, m_scheduledFilename);
 			}
-	
+
+			//delete old backups
+			if (m_rollDate && m_maxDateRollBackups != 0)
+			{
+				FileInfo fi = new FileInfo(m_baseFileName);
+				DateTime currentDate = m_now;
+				string dirName = fi.DirectoryName + Path.DirectorySeparatorChar;
+				int tempMaxDateRollBackups = m_maxDateRollBackups;
+				if (tempMaxDateRollBackups < 0) tempMaxDateRollBackups = 0;
+				int tempMaxSizeRollBackups = m_maxSizeRollBackups;
+				if (tempMaxSizeRollBackups < 0) tempMaxSizeRollBackups = 0;
+
+				// Build all valid file names
+				string[] validFilesName = new string[(tempMaxDateRollBackups + 1) * (tempMaxSizeRollBackups + 1)];
+				for (int iDate = 0; iDate <= tempMaxDateRollBackups; iDate++)
+				{
+					string loopFileNameBase = null;
+					if ((iDate == 0) && m_staticLogFileName)
+					{
+						loopFileNameBase = fi.Name;
+					}
+					else
+					{
+						if (iDate > 0)
+						{
+							currentDate = PreviousCheckDate(currentDate, m_rollPoint);
+						}
+						string loopDateFormat = currentDate.ToString(m_datePattern, System.Globalization.DateTimeFormatInfo.InvariantInfo);
+						loopFileNameBase = fi.Name + loopDateFormat;
+					}
+
+					for (int iSize = 0; iSize <= tempMaxSizeRollBackups; iSize++)
+					{
+						int iFileName = (iDate * (tempMaxSizeRollBackups + 1) + iSize);
+						if (iSize == 0)
+						{
+							validFilesName[iFileName] = loopFileNameBase;
+						}
+						else
+						{
+							validFilesName[iFileName] = loopFileNameBase + "." + iSize;
+						}
+					}
+				}
+
+				// Check if existing files are in valid file names list, also delete it
+				foreach (string current in GetExistingFiles(m_baseFileName))
+				{
+					bool valid = false;
+					foreach (string validFileName in validFilesName)
+					{
+						if (validFileName.Equals(current))
+						{
+							valid = true;
+							break;
+						}
+					}
+					if (valid == false)
+					{
+						string filenameToDelete = dirName + current;
+						DateTime fileLastModified = System.IO.File.GetLastWriteTime(filenameToDelete);
+						DateTime previousCheckDateAfterFileModified = PreviousCheckDate(fileLastModified, m_rollPoint);
+						string formattedCurrent = fileLastModified.ToString(m_datePattern, System.Globalization.DateTimeFormatInfo.InvariantInfo);
+						string formattedNext = previousCheckDateAfterFileModified.ToString(m_datePattern, System.Globalization.DateTimeFormatInfo.InvariantInfo);
+						int lastCharIndexToUse = current.Length - 1;
+						for (int charLoop = current.Length - 1; charLoop >= 0; charLoop--)
+						{
+							byte dummyByte = 0;
+							if ((charLoop < (current.Length - 1)) && (current.Substring(charLoop, 1) == "."))
+							{
+								lastCharIndexToUse = charLoop - 1;
+								break;
+							}
+							else if (!byte.TryParse(current.Substring(charLoop, 1), out dummyByte))
+							{
+								break;
+							}
+						}
+						string currentBase = current.Substring(0, lastCharIndexToUse + 1);
+						if (currentBase.Equals(fi.Name) || currentBase.Equals(fi.Name + formattedCurrent) || currentBase.Equals(fi.Name + formattedNext))
+						{
+							DeleteFile(filenameToDelete);
+						}
+					}
+				}
+			}
+
 			//We've cleared out the old date and are ready for the new
 			m_curSizeRollBackups = 0; 
 	
@@ -1062,7 +1174,84 @@ namespace log4net.Appender
 				SafeOpenFile(m_baseFileName, false);
 			}
 		}
-  
+
+		/// <summary>
+		/// Roll on to the previous interval before the date passed
+		/// </summary>
+		/// <param name="currentDateTime">the current date</param>
+		/// <param name="rollPoint">the type of roll point we are working with</param>
+		/// <returns>the previous roll point an interval before the currentDateTime date</returns>
+		/// <remarks>
+		/// Advances the date to the previous roll point before the 
+		/// currentDateTime date passed to the method.
+		/// </remarks>
+		protected DateTime PreviousCheckDate(DateTime currentDateTime, RollPoint rollPoint)
+		{
+			// Local variable to work on (this does not look very efficient)
+			DateTime current = currentDateTime;
+
+			// Do different things depending on what the type of roll point we are going for is
+			switch (rollPoint)
+			{
+				case RollPoint.TopOfMinute:
+					current = current.AddMilliseconds(-current.Millisecond);
+					current = current.AddSeconds(-current.Second);
+					current = current.AddMinutes(-1);
+					break;
+
+				case RollPoint.TopOfHour:
+					current = current.AddMilliseconds(-current.Millisecond);
+					current = current.AddSeconds(-current.Second);
+					current = current.AddMinutes(-current.Minute);
+					current = current.AddHours(-1);
+					break;
+
+				case RollPoint.HalfDay:
+					current = current.AddMilliseconds(-current.Millisecond);
+					current = current.AddSeconds(-current.Second);
+					current = current.AddMinutes(-current.Minute);
+
+					if (current.Hour < 12)
+					{
+						current = current.AddHours(-current.Hour - 12);
+					}
+					else
+					{
+						current = current.AddHours(-current.Hour);
+					}
+					break;
+
+				case RollPoint.TopOfDay:
+					current = current.AddMilliseconds(-current.Millisecond);
+					current = current.AddSeconds(-current.Second);
+					current = current.AddMinutes(-current.Minute);
+					current = current.AddHours(-current.Hour);
+					current = current.AddDays(-1);
+					break;
+
+				case RollPoint.TopOfWeek:
+					current = current.AddMilliseconds(-current.Millisecond);
+					current = current.AddSeconds(-current.Second);
+					current = current.AddMinutes(-current.Minute);
+					current = current.AddHours(-current.Hour);
+					current = current.AddDays(-(int)current.DayOfWeek - 7);
+					break;
+
+				case RollPoint.TopOfMonth:
+					current = current.AddMilliseconds(-current.Millisecond);
+					current = current.AddSeconds(-current.Second);
+					current = current.AddMinutes(-current.Minute);
+					current = current.AddHours(-current.Hour);
+					current = current.AddDays(-current.Day);
+					// To be in previous month
+					current = current.AddDays(-1);
+					current = current.AddDays(-DateTime.DaysInMonth(current.Year, current.Month) + 1);
+
+					break;
+			}
+			return current;
+		}
+
 		/// <summary>
 		/// Renames file <paramref name="fromFile"/> to file <paramref name="toFile"/>.
 		/// </summary>
@@ -1451,6 +1640,12 @@ namespace log4net.Appender
 		/// There is zero backup files by default
 		/// </summary>
 		private int m_maxSizeRollBackups  = 0;
+
+		/// <summary>
+		/// There is zero backup files by default
+		/// </summary>
+		/// <remarks>Added by Joshua Masek of RoviSys - see http://issues.apache.org/jira/browse/LOG4NET-27</remarks>
+		private int m_maxDateRollBackups = 0;
 
 		/// <summary>
 		/// How many sized based backups have been made so far
