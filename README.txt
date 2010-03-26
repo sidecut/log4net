@@ -1,3 +1,11 @@
+Note from Jim Raden
+===================
+If and when 1.2.11 is released, I will merge with that tag, or perhaps
+abandon this completely.
+
+We now resume the Ron Grabowski README.txt.
+
+
 Project Status
 ==============
 
