@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -98,7 +99,7 @@ namespace log4net.Core
 
 			m_defaultRepositoryType = defaultRepositoryType;
 
-			LogLog.Debug("DefaultRepositorySelector: defaultRepositoryType [" + m_defaultRepositoryType + "]");
+			LogLog.Debug(declaringType, "defaultRepositoryType [" + m_defaultRepositoryType + "]");
 		}
 
 		#endregion Public Instance Constructors
@@ -272,7 +273,7 @@ namespace log4net.Core
 				if (rep == null)
 				{
 					// Not found, therefore create
-					LogLog.Debug("DefaultRepositorySelector: Creating repository for assembly [" + repositoryAssembly + "]");
+					LogLog.Debug(declaringType, "Creating repository for assembly [" + repositoryAssembly + "]");
 
 					// Must specify defaults
 					string actualRepositoryName = repositoryName;
@@ -284,7 +285,7 @@ namespace log4net.Core
 						GetInfoForAssembly(repositoryAssembly, ref actualRepositoryName, ref actualRepositoryType);
 					}
 
-					LogLog.Debug("DefaultRepositorySelector: Assembly [" + repositoryAssembly + "] using repository [" + actualRepositoryName + "] and repository type [" + actualRepositoryType + "]");
+					LogLog.Debug(declaringType, "Assembly [" + repositoryAssembly + "] using repository [" + actualRepositoryName + "] and repository type [" + actualRepositoryType + "]");
 
 					// Lookup the repository in the map (as this may already be defined)
 					rep = m_name2repositoryMap[actualRepositoryName] as ILoggerRepository;
@@ -308,13 +309,13 @@ namespace log4net.Core
 							}
 							catch (Exception ex)
 							{
-								LogLog.Error("DefaultRepositorySelector: Failed to configure repository [" + actualRepositoryName + "] from assembly attributes.", ex);
+								LogLog.Error(declaringType, "Failed to configure repository [" + actualRepositoryName + "] from assembly attributes.", ex);
 							}
 						}
 					}
 					else
 					{
-						LogLog.Debug("DefaultRepositorySelector: repository [" + actualRepositoryName + "] already exists, using repository type [" + rep.GetType().FullName + "]");
+						LogLog.Debug(declaringType, "repository [" + actualRepositoryName + "] already exists, using repository type [" + rep.GetType().FullName + "]");
 
 						if (readAssemblyAttributes)
 						{
@@ -325,7 +326,7 @@ namespace log4net.Core
 							}
 							catch (Exception ex)
 							{
-								LogLog.Error("DefaultRepositorySelector: Failed to configure repository [" + actualRepositoryName + "] from assembly attributes.", ex);
+								LogLog.Error(declaringType, "Failed to configure repository [" + actualRepositoryName + "] from assembly attributes.", ex);
 							}
 						}
 					}
@@ -386,7 +387,7 @@ namespace log4net.Core
 						if (aliasedRepository.GetType() == repositoryType)
 						{
 							// Repository type is compatible
-							LogLog.Debug("DefaultRepositorySelector: Aliasing repository [" + repositoryName + "] to existing repository [" + aliasedRepository.Name + "]");
+							LogLog.Debug(declaringType, "Aliasing repository [" + repositoryName + "] to existing repository [" + aliasedRepository.Name + "]");
 							rep = aliasedRepository;
 
 							// Store in map
@@ -395,7 +396,7 @@ namespace log4net.Core
 						else
 						{
 							// Invalid repository type for alias
-							LogLog.Error("DefaultRepositorySelector: Failed to alias repository [" + repositoryName + "] to existing repository ["+aliasedRepository.Name+"]. Requested repository type ["+repositoryType.FullName+"] is not compatible with existing type [" + aliasedRepository.GetType().FullName + "]");
+							LogLog.Error(declaringType, "Failed to alias repository [" + repositoryName + "] to existing repository ["+aliasedRepository.Name+"]. Requested repository type ["+repositoryType.FullName+"] is not compatible with existing type [" + aliasedRepository.GetType().FullName + "]");
 
 							// We now drop through to create the repository without aliasing
 						}
@@ -404,7 +405,7 @@ namespace log4net.Core
 					// If we could not find an alias
 					if (rep == null)
 					{
-						LogLog.Debug("DefaultRepositorySelector: Creating repository [" + repositoryName + "] using type [" + repositoryType + "]");
+						LogLog.Debug(declaringType, "Creating repository [" + repositoryName + "] using type [" + repositoryType + "]");
 
 						// Call the no arg constructor for the repositoryType
 						rep = (ILoggerRepository)Activator.CreateInstance(repositoryType);
@@ -571,7 +572,7 @@ namespace log4net.Core
 
 			try
 			{
-				LogLog.Debug("DefaultRepositorySelector: Assembly [" + assembly.FullName + "] Loaded From [" + SystemInfo.AssemblyLocationInfo(assembly) + "]");
+				LogLog.Debug(declaringType, "Assembly [" + assembly.FullName + "] Loaded From [" + SystemInfo.AssemblyLocationInfo(assembly) + "]");
 			}
 			catch
 			{
@@ -585,20 +586,20 @@ namespace log4net.Core
 				if (repositoryAttributes == null || repositoryAttributes.Length == 0)
 				{
 					// This is not a problem, but its nice to know what is going on.
-					LogLog.Debug("DefaultRepositorySelector: Assembly [" + assembly + "] does not have a RepositoryAttribute specified.");
+					LogLog.Debug(declaringType, "Assembly [" + assembly + "] does not have a RepositoryAttribute specified.");
 				}
 				else
 				{
 					if (repositoryAttributes.Length > 1)
 					{
-						LogLog.Error("DefaultRepositorySelector: Assembly [" + assembly + "] has multiple log4net.Config.RepositoryAttribute assembly attributes. Only using first occurrence.");
+						LogLog.Error(declaringType, "Assembly [" + assembly + "] has multiple log4net.Config.RepositoryAttribute assembly attributes. Only using first occurrence.");
 					}
 
 					log4net.Config.RepositoryAttribute domAttr = repositoryAttributes[0] as log4net.Config.RepositoryAttribute;
 
 					if (domAttr == null)
 					{
-						LogLog.Error("DefaultRepositorySelector: Assembly [" + assembly + "] has a RepositoryAttribute but it does not!.");
+						LogLog.Error(declaringType, "Assembly [" + assembly + "] has a RepositoryAttribute but it does not!.");
 					}
 					else
 					{
@@ -618,7 +619,7 @@ namespace log4net.Core
 							}
 							else
 							{
-								LogLog.Error("DefaultRepositorySelector: Repository Type [" + domAttr.RepositoryType + "] must implement the ILoggerRepository interface.");
+								LogLog.Error(declaringType, "DefaultRepositorySelector: Repository Type [" + domAttr.RepositoryType + "] must implement the ILoggerRepository interface.");
 							}
 						}
 					}
@@ -626,7 +627,7 @@ namespace log4net.Core
 			}
 			catch (Exception ex)
 			{
-				LogLog.Error("DefaultRepositorySelector: Unhandled exception in GetInfoForAssembly", ex);
+				LogLog.Error(declaringType, "Unhandled exception in GetInfoForAssembly", ex);
 			}
 		}
 
@@ -670,7 +671,7 @@ namespace log4net.Core
 						}
 						catch (Exception ex)
 						{
-							LogLog.Error("DefaultRepositorySelector: Exception calling ["+configAttr.GetType().FullName+"] .Configure method.", ex);
+							LogLog.Error(declaringType, "Exception calling ["+configAttr.GetType().FullName+"] .Configure method.", ex);
 						}
 					}
 				}
@@ -692,7 +693,7 @@ namespace log4net.Core
 					}
 					catch(Exception ex)
 					{
-						LogLog.Warn("DefaultRepositorySelector: Exception getting ApplicationBaseDirectory. appSettings log4net.Config path ["+repositoryConfigFile+"] will be treated as an absolute URI", ex);
+						LogLog.Warn(declaringType, "Exception getting ApplicationBaseDirectory. appSettings log4net.Config path ["+repositoryConfigFile+"] will be treated as an absolute URI", ex);
 					}
 
 					// As we are not going to watch the config file it is easiest to just resolve it as a 
@@ -712,12 +713,12 @@ namespace log4net.Core
 					}
 					catch(Exception ex)
 					{
-						LogLog.Error("DefaultRepositorySelector: Exception while parsing log4net.Config file path ["+repositoryConfigFile+"]", ex);
+						LogLog.Error(declaringType, "Exception while parsing log4net.Config file path ["+repositoryConfigFile+"]", ex);
 					}
 
 					if (repositoryConfigUri != null)
 					{
-						LogLog.Debug("DefaultRepositorySelector: Loading configuration for default repository from AppSettings specified Config URI ["+repositoryConfigUri.ToString()+"]");
+						LogLog.Debug(declaringType, "Loading configuration for default repository from AppSettings specified Config URI ["+repositoryConfigUri.ToString()+"]");
 
 						try
 						{
@@ -726,7 +727,7 @@ namespace log4net.Core
 						}
 						catch (Exception ex)
 						{
-							LogLog.Error("DefaultRepositorySelector: Exception calling XmlConfigurator.Configure method with ConfigUri ["+repositoryConfigUri+"]", ex);
+							LogLog.Error(declaringType, "Exception calling XmlConfigurator.Configure method with ConfigUri ["+repositoryConfigUri+"]", ex);
 						}
 					}
 				}
@@ -767,7 +768,7 @@ namespace log4net.Core
 					}
 					catch(Exception ex)
 					{
-						LogLog.Error("DefaultRepositorySelector: Failed to create plugin. Attribute [" + configAttr.ToString() + "]", ex);
+						LogLog.Error(declaringType, "Failed to create plugin. Attribute [" + configAttr.ToString() + "]", ex);
 					}
 				}
 			}
@@ -806,7 +807,7 @@ namespace log4net.Core
 					}
 					catch(Exception ex)
 					{
-						LogLog.Error("DefaultRepositorySelector: Failed to alias repository [" + configAttr.Name + "]", ex);
+						LogLog.Error(declaringType, "Failed to alias repository [" + configAttr.Name + "]", ex);
 					}
 				}
 			}
@@ -815,6 +816,15 @@ namespace log4net.Core
 		#endregion Private Instance Methods
 
 		#region Private Static Fields
+
+        /// <summary>
+        /// The fully qualified type of the DefaultRepositorySelector class.
+        /// </summary>
+        /// <remarks>
+        /// Used by the internal logger to record the Type of the
+        /// log message.
+        /// </remarks>
+        private readonly static Type declaringType = typeof(DefaultRepositorySelector);
 
 		private const string DefaultRepositoryName = "log4net-default-repository";
 

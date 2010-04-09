@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -20,11 +21,13 @@ using System;
 using System.IO;
 
 using log4net.Config;
-using log4net.Layout;
 using log4net.Core;
+using log4net.Layout;
+using log4net.Layout.Pattern;
 using log4net.Repository;
 using log4net.Tests.Appender;
 using log4net.Util;
+
 using NUnit.Framework;
 
 namespace log4net.Tests.Layout
@@ -35,9 +38,11 @@ namespace log4net.Tests.Layout
 	/// <remarks>
 	/// Used for internal unit testing the <see cref="PatternLayoutTest"/> class.
 	/// </remarks>
-	[TestFixture] public class PatternLayoutTest
+	[TestFixture]
+	public class PatternLayoutTest
 	{
-		[Test] public void TestThreadPropertiesPattern()
+		[Test]
+		public void TestThreadPropertiesPattern()
 		{
 			StringAppender stringAppender = new StringAppender();
 			stringAppender.Layout = new PatternLayout("%property{prop1}");
@@ -64,7 +69,24 @@ namespace log4net.Tests.Layout
 			stringAppender.Reset();
 		}
 
-		[Test] public void TestGlobalPropertiesPattern()
+        [Test]
+        public void TestStackTracePattern()
+        {
+            StringAppender stringAppender = new StringAppender();
+            stringAppender.Layout = new PatternLayout("%stacktrace{2}");
+
+            ILoggerRepository rep = LogManager.CreateRepository(Guid.NewGuid().ToString());
+            BasicConfigurator.Configure(rep, stringAppender);
+
+            ILog log1 = LogManager.GetLogger(rep.Name, "TestStackTracePattern");
+
+            log1.Info("TestMessage");
+            Assert.AreEqual("RuntimeMethodHandle._InvokeMethodFast > PatternLayoutTest.TestStackTracePattern", stringAppender.GetString(), "stack trace value set");
+            stringAppender.Reset();
+        }
+
+		[Test]
+		public void TestGlobalPropertiesPattern()
 		{
 			StringAppender stringAppender = new StringAppender();
 			stringAppender.Layout = new PatternLayout("%property{prop1}");
@@ -91,7 +113,8 @@ namespace log4net.Tests.Layout
 			stringAppender.Reset();
 		}
 
-		[Test] public void TestAddingCustomPattern()
+		[Test]
+		public void TestAddingCustomPattern()
 		{
 			StringAppender stringAppender = new StringAppender();
 			PatternLayout layout = new PatternLayout();
@@ -109,13 +132,13 @@ namespace log4net.Tests.Layout
 
 			log1.Info("TestMessage");
 			Assert.AreEqual("TestMessage", stringAppender.GetString(), "%TestAddingCustomPattern not registered");
-			stringAppender.Reset();	
+			stringAppender.Reset();
 		}
 
 		/// <summary>
 		/// Converter to include event message
 		/// </summary>
-		private class TestMessagePatternConverter : log4net.Layout.Pattern.PatternLayoutConverter 
+		private class TestMessagePatternConverter : PatternLayoutConverter
 		{
 			/// <summary>
 			/// Convert the pattern to the rendered message
@@ -123,10 +146,30 @@ namespace log4net.Tests.Layout
 			/// <param name="writer"><see cref="TextWriter" /> that will receive the formatted result.</param>
 			/// <param name="loggingEvent">the event being logged</param>
 			/// <returns>the relevant location information</returns>
-			override protected void Convert(System.IO.TextWriter writer, LoggingEvent loggingEvent)
+			protected override void Convert(TextWriter writer, LoggingEvent loggingEvent)
 			{
 				loggingEvent.WriteRenderedMessage(writer);
 			}
+		}
+
+		[Test]
+		public void TestExceptionPattern()
+		{
+			StringAppender stringAppender = new StringAppender();
+			PatternLayout layout = new PatternLayout("%exception{stacktrace}");
+			stringAppender.Layout = layout;
+
+			ILoggerRepository rep = LogManager.CreateRepository(Guid.NewGuid().ToString());
+			BasicConfigurator.Configure(rep, stringAppender);
+
+			ILog log1 = LogManager.GetLogger(rep.Name, "TestExceptionPattern");
+
+			Exception exception = new Exception("Oh no!");
+			log1.Info("TestMessage", exception);
+
+			Assert.AreEqual(SystemInfo.NullText, stringAppender.GetString());
+
+			stringAppender.Reset();
 		}
 	}
 }

@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -17,6 +18,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Diagnostics;
 
 using log4net.Util;
@@ -88,7 +90,7 @@ namespace log4net.Core
 				{
 					StackTrace st = new StackTrace(true);
 					int frameIndex = 0;
-
+																				
 					// skip frames not from fqnOfCallingClass
 					while (frameIndex < st.FrameCount)
 					{
@@ -113,6 +115,17 @@ namespace log4net.Core
 
 					if (frameIndex < st.FrameCount)
 					{
+						// take into account the frames we skip above
+						int adjustedFrameCount = st.FrameCount - frameIndex;
+                        ArrayList stackFramesList = new ArrayList(adjustedFrameCount);
+						m_stackFrames = new StackFrame[adjustedFrameCount];
+						for (int i=frameIndex; i < st.FrameCount; i++) 
+						{
+							stackFramesList.Add(st.GetFrame(i));
+						}
+												
+						stackFramesList.CopyTo(m_stackFrames, 0);
+						
 						// now frameIndex is the first 'user' caller frame
 						StackFrame locationFrame = st.GetFrame(frameIndex);
 
@@ -140,7 +153,7 @@ namespace log4net.Core
 				{
 					// This security exception will occur if the caller does not have 
 					// some undefined set of SecurityPermission flags.
-					LogLog.Debug("LocationInfo: Security exception while trying to get caller stack frame. Error Ignored. Location Information Not Available.");
+					LogLog.Debug(declaringType, "Security exception while trying to get caller stack frame. Error Ignored. Location Information Not Available.");
 				}
 			}
 #endif
@@ -257,6 +270,14 @@ namespace log4net.Core
 		{
 			get { return m_fullInfo; }
 		}
+		
+		/// <summary>
+		/// Gets the stack frames from the stack trace of the caller making the log request
+		/// </summary>
+		public StackFrame[] StackFrames
+		{
+			get { return m_stackFrames; }
+		}
 
 		#endregion Public Instance Properties
 
@@ -267,10 +288,20 @@ namespace log4net.Core
 		private readonly string m_lineNumber;
 		private readonly string m_methodName;
 		private readonly string m_fullInfo;
+		private readonly StackFrame[] m_stackFrames;
 
 		#endregion Private Instance Fields
 
 		#region Private Static Fields
+
+	    /// <summary>
+	    /// The fully qualified type of the LocationInfo class.
+	    /// </summary>
+	    /// <remarks>
+	    /// Used by the internal logger to record the Type of the
+	    /// log message.
+	    /// </remarks>
+	    private readonly static Type declaringType = typeof(LocationInfo);
 
 		/// <summary>
 		/// When location information is not available the constant

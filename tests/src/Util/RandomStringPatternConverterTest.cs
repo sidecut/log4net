@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -28,9 +29,11 @@ namespace log4net.Tests.Util
 	/// <remarks>
 	/// Used for internal unit testing the <see cref="RandomStringPatternConverter"/> class.
 	/// </remarks>
-	[TestFixture] public class RandomStringPatternConverterTest
+	[TestFixture]
+	public class RandomStringPatternConverterTest
 	{
-		[Test] public void TestConvert()
+		[Test]
+		public void TestConvert()
 		{
 			RandomStringPatternConverter converter = new RandomStringPatternConverter();
 
@@ -58,9 +61,9 @@ namespace log4net.Tests.Util
 			Assert.IsTrue(string1 != string2, "strings should be different");
 		}
 
-		class RandomStringPatternConverter
+		private class RandomStringPatternConverter
 		{
-			object target = null;
+			private object target = null;
 
 			public RandomStringPatternConverter()
 			{
@@ -73,7 +76,7 @@ namespace log4net.Tests.Util
 				set { Utils.SetProperty(target, "Option", value); }
 			}
 
-			public void Convert(TextWriter writer, object state) 
+			public void Convert(TextWriter writer, object state)
 			{
 				Utils.InvokeMethod(target, "Convert", writer, state);
 			}

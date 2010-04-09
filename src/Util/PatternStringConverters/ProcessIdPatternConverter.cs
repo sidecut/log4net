@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -59,11 +60,24 @@ namespace log4net.Util.PatternStringConverters
 			{
 				// This security exception will occur if the caller does not have 
 				// some undefined set of SecurityPermission flags.
-				LogLog.Debug("ProcessIdPatternConverter: Security exception while trying to get current process id. Error Ignored.");
+				LogLog.Debug(declaringType, "Security exception while trying to get current process id. Error Ignored.");
 
 				writer.Write( SystemInfo.NotAvailableText );
 			}
 #endif
 		}
+
+	    #region Private Static Fields
+
+	    /// <summary>
+	    /// The fully qualified type of the ProcessIdPatternConverter class.
+	    /// </summary>
+	    /// <remarks>
+	    /// Used by the internal logger to record the Type of the
+	    /// log message.
+	    /// </remarks>
+	    private readonly static Type declaringType = typeof(ProcessIdPatternConverter);
+
+	    #endregion Private Static Fields
 	}
 }

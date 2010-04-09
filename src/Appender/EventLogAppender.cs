@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -253,11 +254,11 @@ namespace log4net.Appender
 
 			if (sourceAlreadyExists && currentLogName != m_logName)
 			{
-				LogLog.Debug("EventLogAppender: Changing event source [" + m_applicationName + "] from log [" + currentLogName + "] to log [" + m_logName + "]");
+				LogLog.Debug(declaringType, "Changing event source [" + m_applicationName + "] from log [" + currentLogName + "] to log [" + m_logName + "]");
 			}
 			else if (!sourceAlreadyExists)
 			{
-				LogLog.Debug("EventLogAppender: Creating event source Source [" + m_applicationName + "] in log " + m_logName + "]");
+				LogLog.Debug(declaringType, "Creating event source Source [" + m_applicationName + "] in log " + m_logName + "]");
 			}
 
 			string registeredLogName = null;
@@ -285,7 +286,7 @@ namespace log4net.Appender
 
 			m_levelMapping.ActivateOptions();
 
-			LogLog.Debug("EventLogAppender: Source [" + m_applicationName + "] is registered to log [" + registeredLogName + "]");		
+			LogLog.Debug(declaringType, "Source [" + m_applicationName + "] is registered to log [" + registeredLogName + "]");		
 		}
 
 		#endregion // Implementation of IOptionHandler
@@ -307,7 +308,6 @@ namespace log4net.Appender
 #endif
 		}
  
-
 		#region Override implementation of AppenderSkeleton
 
 		/// <summary>
@@ -503,6 +503,19 @@ namespace log4net.Appender
 		}
 
 		#endregion // LevelColors LevelMapping Entry
+
+	    #region Private Static Fields
+
+	    /// <summary>
+	    /// The fully qualified type of the EventLogAppender class.
+	    /// </summary>
+	    /// <remarks>
+	    /// Used by the internal logger to record the Type of the
+	    /// log message.
+	    /// </remarks>
+	    private readonly static Type declaringType = typeof(EventLogAppender);
+
+	    #endregion Private Static Fields
 	}
 }
 

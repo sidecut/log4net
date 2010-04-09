@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -50,6 +51,13 @@ namespace log4net
 	/// </para>
 	/// <para>
 	/// The Logical Thread Context is managed on a per <see cref="System.Runtime.Remoting.Messaging.CallContext"/> basis.
+	/// </para>
+	/// <para>
+	/// The <see cref="System.Runtime.Remoting.Messaging.CallContext"/> requires a link time 
+	/// <see cref="System.Security.Permissions.SecurityPermission"/> for the
+	/// <see cref="System.Security.Permissions.SecurityPermissionFlag.Infrastructure"/>.
+	/// If the calling code does not have this permission then this context will be disabled.
+	/// It will not store any property values set on it.
 	/// </para>
 	/// </remarks>
 	/// <example>Example of using the thread context properties to store a username.

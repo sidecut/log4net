@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -78,7 +79,7 @@ namespace log4net.Appender
 			// There is no point in closing twice.
 			if (!m_closed) 
 			{
-				LogLog.Debug("AppenderSkeleton: Finalizing appender named ["+m_name+"].");
+				LogLog.Debug(declaringType, "Finalizing appender named ["+m_name+"].");
 				Close();
 			}
 		}
@@ -131,7 +132,7 @@ namespace log4net.Appender
 					{
 						// We do not throw exception here since the cause is probably a
 						// bad config file.
-						LogLog.Warn("AppenderSkeleton: You have tried to set a null error-handler.");
+						LogLog.Warn(declaringType, "You have tried to set a null error-handler.");
 					} 
 					else 
 					{
@@ -876,5 +877,18 @@ namespace log4net.Appender
 		private const int c_renderBufferMaxCapacity = 1024;
 
 		#endregion
+
+	    #region Private Static Fields
+
+	    /// <summary>
+	    /// The fully qualified type of the AppenderSkeleton class.
+	    /// </summary>
+	    /// <remarks>
+	    /// Used by the internal logger to record the Type of the
+	    /// log message.
+	    /// </remarks>
+	    private readonly static Type declaringType = typeof(AppenderSkeleton);
+
+	    #endregion Private Static Fields
 	}
 }

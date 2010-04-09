@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -46,10 +47,12 @@ namespace log4net.Appender
 	/// <para>
 	/// The logging event is passed to the <see cref="TraceContext.Write(string)"/> or 
 	/// <see cref="TraceContext.Warn(string)"/> method depending on the level of the logging event.
+    /// The event's logger name is the default value for the category parameter of the Write/Warn method. 
 	/// </para>
 	/// </remarks>
 	/// <author>Nicko Cadell</author>
 	/// <author>Gert Driesen</author>
+	/// <author>Ron Grabowski</author>
 	public class AspNetTraceAppender : AppenderSkeleton 
 	{
 		#region Public Instances Constructors
@@ -91,11 +94,11 @@ namespace log4net.Appender
 				{
 					if (loggingEvent.Level >= Level.Warn) 
 					{
-						HttpContext.Current.Trace.Warn(loggingEvent.LoggerName, RenderLoggingEvent(loggingEvent));
+                        HttpContext.Current.Trace.Warn(m_category.Format(loggingEvent), RenderLoggingEvent(loggingEvent));
 					}
 					else 
 					{
-						HttpContext.Current.Trace.Write(loggingEvent.LoggerName, RenderLoggingEvent(loggingEvent));
+                        HttpContext.Current.Trace.Write(m_category.Format(loggingEvent), RenderLoggingEvent(loggingEvent));
 					}
 				}
 			}
@@ -116,6 +119,36 @@ namespace log4net.Appender
 		}
 
 		#endregion // Override implementation of AppenderSkeleton
+
+        #region Public Instance Properties
+
+        /// <summary>
+        /// The category parameter sent to the Trace method.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Defaults to %logger which will use the logger name of the current 
+        /// <see cref="LoggingEvent"/> as the category parameter.
+        /// </para>
+        /// <para>
+        /// </para> 
+        /// </remarks>
+        public PatternLayout Category
+        {
+            get { return m_category; }
+            set { m_category = value; }
+        }
+
+	    #endregion
+
+	    #region Private Instance Fields
+
+	    /// <summary>
+	    /// Defaults to %logger
+	    /// </summary>
+	    private PatternLayout m_category = new PatternLayout("%logger");
+
+	    #endregion
 	}
 }
 

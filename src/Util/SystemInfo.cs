@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2006 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -82,7 +83,7 @@ namespace log4net.Util
 			string nullTextAppSettingsKey = SystemInfo.GetAppSetting("log4net.NullText");
 			if (nullTextAppSettingsKey != null && nullTextAppSettingsKey.Length > 0)
 			{
-				LogLog.Debug("SystemInfo: Initializing NullText value to [" + nullTextAppSettingsKey + "].");
+				LogLog.Debug(declaringType, "Initializing NullText value to [" + nullTextAppSettingsKey + "].");
 				nullText = nullTextAppSettingsKey;
 			}
 
@@ -90,7 +91,7 @@ namespace log4net.Util
 			string notAvailableTextAppSettingsKey = SystemInfo.GetAppSetting("log4net.NotAvailableText");
 			if (notAvailableTextAppSettingsKey != null && notAvailableTextAppSettingsKey.Length > 0)
 			{
-				LogLog.Debug("SystemInfo: Initializing NotAvailableText value to [" + notAvailableTextAppSettingsKey + "].");
+				LogLog.Debug(declaringType, "Initializing NotAvailableText value to [" + notAvailableTextAppSettingsKey + "].");
 				notAvailableText = notAvailableTextAppSettingsKey;
 			}
 #endif
@@ -222,9 +223,9 @@ namespace log4net.Util
 		{
 			get 
 			{
-#if NETCF
+#if NETCF_1_0
 				return System.Threading.Thread.CurrentThread.GetHashCode();
-#elif NET_2_0
+#elif NET_2_0 || NETCF_2_0 || MONO_2_0
 				return System.Threading.Thread.CurrentThread.ManagedThreadId;
 #else
 				return AppDomain.GetCurrentThreadId();
@@ -331,7 +332,7 @@ namespace log4net.Util
 					{
 						// This security exception will occur if the caller does not have 
 						// some undefined set of SecurityPermission flags.
-						LogLog.Debug("SystemInfo: Security exception while trying to get current domain friendly name. Error Ignored.");
+						LogLog.Debug(declaringType, "Security exception while trying to get current domain friendly name. Error Ignored.");
 					}
 
 					if (s_appFriendlyName == null || s_appFriendlyName.Length == 0)
@@ -627,7 +628,7 @@ namespace log4net.Util
 			// Check if the type name specifies the assembly name
 			if(typeName.IndexOf(',') == -1)
 			{
-				//LogLog.Debug("SystemInfo: Loading type ["+typeName+"] from assembly ["+relativeAssembly.FullName+"]");
+				//LogLog.Debug(declaringType, "SystemInfo: Loading type ["+typeName+"] from assembly ["+relativeAssembly.FullName+"]");
 #if NETCF
 				return relativeAssembly.GetType(typeName, throwOnError);
 #else
@@ -636,7 +637,7 @@ namespace log4net.Util
 				if (type != null)
 				{
 					// Found type in relative assembly
-					//LogLog.Debug("SystemInfo: Loaded type ["+typeName+"] from assembly ["+relativeAssembly.FullName+"]");
+					//LogLog.Debug(declaringType, "SystemInfo: Loaded type ["+typeName+"] from assembly ["+relativeAssembly.FullName+"]");
 					return type;
 				}
 
@@ -659,7 +660,7 @@ namespace log4net.Util
 						if (type != null)
 						{
 							// Found type in loaded assembly
-							LogLog.Debug("SystemInfo: Loaded type ["+typeName+"] from assembly ["+assembly.FullName+"] by searching loaded assemblies.");
+							LogLog.Debug(declaringType, "Loaded type ["+typeName+"] from assembly ["+assembly.FullName+"] by searching loaded assemblies.");
 							return type;
 						}
 					}
@@ -676,8 +677,11 @@ namespace log4net.Util
 			else
 			{
 				// Includes explicit assembly name
-				//LogLog.Debug("SystemInfo: Loading type ["+typeName+"] from global Type");
+				//LogLog.Debug(declaringType, "SystemInfo: Loading type ["+typeName+"] from global Type");
+
 #if NETCF
+				// In NETCF 2 and 3 arg versions seem to behave differently
+				// https://issues.apache.org/jira/browse/LOG4NET-113
 				return Type.GetType(typeName, throwOnError);
 #else
 				return Type.GetType(typeName, throwOnError, ignoreCase);
@@ -697,7 +701,7 @@ namespace log4net.Util
 		/// </remarks>
 		public static Guid NewGuid()
 		{
-#if NETCF
+#if NETCF_1_0
 			return PocketGuid.NewGuid();
 #else
 			return Guid.NewGuid();
@@ -725,8 +729,10 @@ namespace log4net.Util
 		/// </remarks>
 		public static ArgumentOutOfRangeException CreateArgumentOutOfRangeException(string parameterName, object actualValue, string message)
 		{
-#if NETCF
-			return new ArgumentOutOfRangeException(message + " param: " + parameterName + " value: " + actualValue);
+#if NETCF_1_0
+			return new ArgumentOutOfRangeException(message + " [param=" + parameterName + "] [value=" + actualValue + "]");
+#elif NETCF_2_0
+			return new ArgumentOutOfRangeException(parameterName, message + " [value=" + actualValue + "]");
 #else
 			return new ArgumentOutOfRangeException(parameterName, actualValue, message);
 #endif
@@ -854,7 +860,7 @@ namespace log4net.Util
 			catch(Exception ex)
 			{
 				// If an exception is thrown here then it looks like the config file does not parse correctly.
-				LogLog.Error("DefaultRepositorySelector: Exception while reading ConfigurationSettings. Check your .config file is well formed XML.", ex);
+				LogLog.Error(declaringType, "Exception while reading ConfigurationSettings. Check your .config file is well formed XML.", ex);
 			}
 			return null;
 		}
@@ -920,8 +926,10 @@ namespace log4net.Util
 		/// </remarks>
 		public static Hashtable CreateCaseInsensitiveHashtable()
 		{
-#if NETCF
+#if NETCF_1_0
 			return new Hashtable(CaseInsensitiveHashCodeProvider.Default, CaseInsensitiveComparer.Default);
+#elif NETCF_2_0 || NET_2_0 || MONO_2_0
+			return new Hashtable(StringComparer.OrdinalIgnoreCase);
 #else
 			return System.Collections.Specialized.CollectionsUtil.CreateCaseInsensitiveHashtable();
 #endif
@@ -987,6 +995,15 @@ namespace log4net.Util
 
 		#region Private Static Fields
 
+	    /// <summary>
+	    /// The fully qualified type of the SystemInfo class.
+	    /// </summary>
+	    /// <remarks>
+	    /// Used by the internal logger to record the Type of the
+	    /// log message.
+	    /// </remarks>
+	    private readonly static Type declaringType = typeof(SystemInfo);
+
 		/// <summary>
 		/// Cache the host name for the current machine
 		/// </summary>
@@ -1015,7 +1032,7 @@ namespace log4net.Util
 		#endregion
 
 		#region Compact Framework Helper Classes
-#if NETCF
+#if NETCF_1_0
 		/// <summary>
 		/// Generate GUIDs on the .NET Compact Framework.
 		/// </summary>

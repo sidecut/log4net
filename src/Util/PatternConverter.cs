@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -16,12 +17,10 @@
 //
 #endregion
 
-using System;
 using System.Text;
 using System.IO;
 using System.Collections;
 
-using log4net.Core;
 using log4net.Util;
 using log4net.Repository;
 
@@ -292,12 +291,36 @@ namespace log4net.Util
 		/// </remarks>
 		protected static void WriteDictionary(TextWriter writer, ILoggerRepository repository, IDictionary value)
 		{
+			WriteDictionary(writer, repository, value.GetEnumerator());
+		}
+
+		/// <summary>
+		/// Write an dictionary to a <see cref="TextWriter"/>
+		/// </summary>
+		/// <param name="writer">the writer to write to</param>
+		/// <param name="repository">a <see cref="ILoggerRepository"/> to use for object conversion</param>
+		/// <param name="value">the value to write to the writer</param>
+		/// <remarks>
+		/// <para>
+		/// Writes the <see cref="IDictionaryEnumerator"/> to a writer in the form:
+		/// </para>
+		/// <code>
+		/// {key1=value1, key2=value2, key3=value3}
+		/// </code>
+		/// <para>
+		/// If the <see cref="ILoggerRepository"/> specified
+		/// is not null then it is used to render the key and value to text, otherwise
+		/// the object's ToString method is called.
+		/// </para>
+		/// </remarks>
+		protected static void WriteDictionary(TextWriter writer, ILoggerRepository repository, IDictionaryEnumerator value)
+		{
 			writer.Write("{");
 
 			bool first = true;
 
 			// Write out all the dictionary key value pairs
-			foreach(DictionaryEntry entry in value)
+			while (value.MoveNext())
 			{
 				if (first)
 				{
@@ -307,9 +330,9 @@ namespace log4net.Util
 				{
 					writer.Write(", ");
 				}
-				WriteObject(writer, repository, entry.Key);
+				WriteObject(writer, repository, value.Key);
 				writer.Write("=");
-				WriteObject(writer, repository, entry.Value);
+				WriteObject(writer, repository, value.Value);
 			}
 
 			writer.Write("}");
@@ -349,5 +372,16 @@ namespace log4net.Util
 		}
 
 		#endregion
+
+        private PropertiesDictionary properties;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public PropertiesDictionary Properties
+	    {
+	        get { return properties; }
+	        set { properties = value; }
+	    }
 	}
 }

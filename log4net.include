@@ -1,12 +1,13 @@
 <?xml version="1.0" ?>
 <!--
-Copyright 2004-2005 The Apache Software Foundation
+Licensed to the Apache Software Foundation (ASF) under one or more 
+contributor license agreements. See the NOTICE file distributed with
+this work for additional information regarding copyright ownership. 
+The ASF licenses this file to you under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with 
+the License. You may obtain a copy of the License at
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -225,14 +226,52 @@ limitations under the License.
         <property name="current.sdkdoc.dir" value="${sdkdoc.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}" />
         <property name="current.sdkdoc.debug" value="${sdkdoc.debug}" dynamic="true" />
     </target>
+    <!-- uses NET_2_0 defines -->
+    <target name="set-net-3.0-runtime-configuration" depends="check-bin-dir, check-sdkdoc-dir, check-sdkdoc-debug, check-current-build-config, check-build-debug, check-build-defines">
+      <property name="nant.settings.currentframework" value="net-3.0" />
+      <property name="current.build.debug" value="${build.debug}" dynamic="true" />
+      <property name="current.build.defines.csc" value="${build.defines.csc},NET,NET_2_0" dynamic="true" />
+      <property name="current.build.defines.jsc" value="${build.defines.jsc},NET,NET_2_0" dynamic="true" />
+      <property name="current.build.defines.vbc" value="${build.defines.vbc},NET=True,NET_2_0=True" dynamic="true" />
+      <property name="current.build.defines.vjc" value="${build.defines.vjc},NET,NET_2_0" dynamic="true" />
+      <property name="current.build.defines.cl" value="${build.defines.cl} /D NET /D NET_2_0" dynamic="true" />
+      <property name="current.bin.dir" value="${bin.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}/${current.build.config}" />
+      <property name="current.sdkdoc.dir" value="${sdkdoc.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}" />
+      <property name="current.sdkdoc.debug" value="${sdkdoc.debug}" dynamic="true" />
+    </target>
+    <!-- uses NET_2_0 defines -->
+    <target name="set-net-3.5-runtime-configuration" depends="check-bin-dir, check-sdkdoc-dir, check-sdkdoc-debug, check-current-build-config, check-build-debug, check-build-defines">
+      <property name="nant.settings.currentframework" value="net-3.5" />
+      <property name="current.build.debug" value="${build.debug}" dynamic="true" />
+      <property name="current.build.defines.csc" value="${build.defines.csc},NET,NET_2_0" dynamic="true" />
+      <property name="current.build.defines.jsc" value="${build.defines.jsc},NET,NET_2_0" dynamic="true" />
+      <property name="current.build.defines.vbc" value="${build.defines.vbc},NET=True,NET_2_0=True" dynamic="true" />
+      <property name="current.build.defines.vjc" value="${build.defines.vjc},NET,NET_2_0" dynamic="true" />
+      <property name="current.build.defines.cl" value="${build.defines.cl} /D NET /D NET_2_0" dynamic="true" />
+      <property name="current.bin.dir" value="${bin.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}/${current.build.config}" />
+      <property name="current.sdkdoc.dir" value="${sdkdoc.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}" />      
+      <property name="current.sdkdoc.debug" value="${sdkdoc.debug}" dynamic="true" />
+    </target>
     <target name="set-netcf-1.0-runtime-configuration" depends="check-bin-dir, check-sdkdoc-dir, check-sdkdoc-debug, check-current-build-config, check-build-debug, check-build-defines">
         <property name="nant.settings.currentframework" value="netcf-1.0" />
         <property name="current.build.debug" value="${build.debug}" dynamic="true" />
         <property name="current.build.defines.csc" value="${build.defines.csc},NETCF,NETCF_1_0" dynamic="true" />
         <property name="current.build.defines.jsc" value="${build.defines.jsc},NETCF,NETCF_1_0" dynamic="true" />
-        <property name="current.build.defines.vbc" value="${build.defines.vbc},NETCF=True" dynamic="true" />
-        <property name="current.build.defines.vjc" value="${build.defines.vjc},NETCF" dynamic="true" />
+        <property name="current.build.defines.vbc" value="${build.defines.vbc},NETCF=True,NETCF_1_0=True" dynamic="true" />
+        <property name="current.build.defines.vjc" value="${build.defines.vjc},NETCF,NETCF_1_0" dynamic="true" />
         <property name="current.build.defines.cl" value="${build.defines.cl} /D NETCF /D NETCF_1_0" dynamic="true" />
+        <property name="current.bin.dir" value="${bin.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}/${current.build.config}" />
+        <property name="current.sdkdoc.dir" value="${sdkdoc.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}" />
+        <property name="current.sdkdoc.debug" value="${sdkdoc.debug}" dynamic="true" />
+    </target>
+	<target name="set-netcf-2.0-runtime-configuration" depends="check-bin-dir, check-sdkdoc-dir, check-sdkdoc-debug, check-current-build-config, check-build-debug, check-build-defines">
+        <property name="nant.settings.currentframework" value="netcf-2.0" />
+        <property name="current.build.debug" value="${build.debug}" dynamic="true" />
+        <property name="current.build.defines.csc" value="${build.defines.csc},NETCF,NETCF_2_0" dynamic="true" />
+        <property name="current.build.defines.jsc" value="${build.defines.jsc},NETCF,NETCF_2_0" dynamic="true" />
+        <property name="current.build.defines.vbc" value="${build.defines.vbc},NETCF=True,NETCF_2_0=True" dynamic="true" />
+        <property name="current.build.defines.vjc" value="${build.defines.vjc},NETCF,NETCF_2_0" dynamic="true" />
+        <property name="current.build.defines.cl" value="${build.defines.cl} /D NETCF /D NETCF_2_0" dynamic="true" />
         <property name="current.bin.dir" value="${bin.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}/${current.build.config}" />
         <property name="current.sdkdoc.dir" value="${sdkdoc.dir}/${framework::get-family(framework::get-target-framework())}/${framework::get-version(framework::get-target-framework())}" />
         <property name="current.sdkdoc.debug" value="${sdkdoc.debug}" dynamic="true" />

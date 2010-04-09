@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -16,8 +17,9 @@
 //
 #endregion
 
-using log4net.Core;
 using log4net.Appender;
+using log4net.Config;
+using log4net.Core;
 
 using NUnit.Framework;
 
@@ -29,11 +31,12 @@ namespace log4net.Tests.Appender
 	/// <remarks>
 	/// Used for internal unit testing the <see cref="BufferingAppenderSkeleton"/> class.
 	/// </remarks>
-	[TestFixture] public class BufferingAppenderTest
+	[TestFixture]
+	public class BufferingAppenderTest
 	{
 		private BufferingForwardingAppender m_bufferingForwardingAppender;
 		private CountingAppender m_countingAppender;
-		private log4net.Repository.Hierarchy.Hierarchy m_hierarchy;
+		private Repository.Hierarchy.Hierarchy m_hierarchy;
 
 
 		private void SetupRepository()
@@ -56,12 +59,13 @@ namespace log4net.Tests.Appender
 
 			m_bufferingForwardingAppender.ActivateOptions();
 
-			log4net.Config.BasicConfigurator.Configure(m_hierarchy, m_bufferingForwardingAppender);
+			BasicConfigurator.Configure(m_hierarchy, m_bufferingForwardingAppender);
 		}
 
 		/// <summary>
 		/// </summary>
-		[Test] public void TestSetupAppender()
+		[Test]
+		public void TestSetupAppender()
 		{
 			SetupRepository();
 
@@ -75,7 +79,8 @@ namespace log4net.Tests.Appender
 
 		/// <summary>
 		/// </summary>
-		[Test] public void TestBufferSize5()
+		[Test]
+		public void TestBufferSize5()
 		{
 			SetupRepository();
 

@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -91,18 +92,70 @@ namespace log4net.Appender
 		/// Gets or sets a semicolon-delimited list of recipient e-mail addresses.
 		/// </summary>
 		/// <value>
-		/// A semicolon-delimited list of e-mail addresses.
+        /// <para>
+        /// For .NET 1.1 (System.Web.Mail): A semicolon-delimited list of e-mail addresses.
+        /// </para>
+        /// <para>
+        /// For .NET 2.0 (System.Net.Mail): A comma-delimited list of e-mail addresses.
+        /// </para>
 		/// </value>
 		/// <remarks>
-		/// <para>
-		/// A semicolon-delimited list of recipient e-mail addresses.
-		/// </para>
+        /// <para>
+        /// For .NET 1.1 (System.Web.Mail): A semicolon-delimited list of e-mail addresses.
+        /// </para>
+        /// <para>
+        /// For .NET 2.0 (System.Net.Mail): A comma-delimited list of e-mail addresses.
+        /// </para>
 		/// </remarks>
-		public string To 
+		public string To
 		{
 			get { return m_to; }
 			set { m_to = value; }
 		}
+
+        /// <summary>
+        /// Gets or sets a semicolon-delimited list of recipient e-mail addresses 
+        /// that will be carbon copied.
+        /// </summary>
+        /// <value>
+        /// <para>
+        /// For .NET 1.1 (System.Web.Mail): A semicolon-delimited list of e-mail addresses.
+        /// </para>
+        /// <para>
+        /// For .NET 2.0 (System.Net.Mail): A comma-delimited list of e-mail addresses.
+        /// </para>
+        /// </value>
+        /// <remarks>
+        /// <para>
+        /// For .NET 1.1 (System.Web.Mail): A semicolon-delimited list of e-mail addresses.
+        /// </para>
+        /// <para>
+        /// For .NET 2.0 (System.Net.Mail): A comma-delimited list of e-mail addresses.
+        /// </para>
+        /// </remarks>
+        public string Cc
+        {
+            get { return m_cc; }
+            set { m_cc = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets a semicolon-delimited list of recipient e-mail addresses
+        /// that will be blind carbon copied.
+        /// </summary>
+        /// <value>
+        /// A semicolon-delimited list of e-mail addresses.
+        /// </value>
+        /// <remarks>
+        /// <para>
+        /// A semicolon-delimited list of recipient e-mail addresses.
+        /// </para>
+        /// </remarks>
+        public string Bcc
+        {
+            get { return m_bcc; }
+            set { m_bcc = value; }
+        }
 
 		/// <summary>
 		/// Gets or sets the e-mail address of the sender.
@@ -270,6 +323,32 @@ namespace log4net.Appender
 			set { m_mailPriority = value; }
 		}
 
+#if NET_2_0
+        /// <summary>
+        /// Enable or disable use of SSL when sending e-mail message
+        /// </summary>
+        /// <remarks>
+        /// This is available on MS .NET 2.0 runtime and higher
+        /// </remarks>
+        public bool EnableSsl
+        {
+            get { return m_enableSsl; }
+            set { m_enableSsl = value; }
+        }
+
+        /// <summary>
+        /// Gets or sets the reply-to e-mail address.
+        /// </summary>
+        /// <remarks>
+        /// This is available on MS .NET 2.0 runtime and higher
+        /// </remarks>
+        public string ReplyTo
+        {
+            get { return m_replyTo; }
+            set { m_replyTo = value; }
+        }
+#endif
+
 		#endregion // Public Instance Properties
 
 		#region Override implementation of BufferingAppenderSkeleton
@@ -347,12 +426,13 @@ namespace log4net.Appender
 
 			// Create and configure the smtp client
 			SmtpClient smtpClient = new SmtpClient();
-			if (m_smtpHost != null && m_smtpHost.Length > 0)
+			if (!String.IsNullOrEmpty(m_smtpHost))
 			{
 				smtpClient.Host = m_smtpHost;
 			}
 			smtpClient.Port = m_port;
 			smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+            smtpClient.EnableSsl = m_enableSsl;
 
 			if (m_authentication == SmtpAuthentication.Basic)
 			{
@@ -365,16 +445,30 @@ namespace log4net.Appender
 				smtpClient.Credentials = System.Net.CredentialCache.DefaultNetworkCredentials;
 			}
 
-			MailMessage mailMessage = new MailMessage();
-			mailMessage.Body = messageBody;
-			mailMessage.From = new MailAddress(m_from);
-			mailMessage.To.Add(m_to);
-			mailMessage.Subject = m_subject;
-			mailMessage.Priority = m_mailPriority;
+            using (MailMessage mailMessage = new MailMessage())
+            {
+                mailMessage.Body = messageBody;
+                mailMessage.From = new MailAddress(m_from);
+                mailMessage.To.Add(m_to);
+                if (!String.IsNullOrEmpty(m_cc))
+                {
+                    mailMessage.CC.Add(m_cc);
+                }
+                if (!String.IsNullOrEmpty(m_bcc))
+                {
+                    mailMessage.Bcc.Add(m_bcc);
+                }
+                if (!String.IsNullOrEmpty(m_replyTo))
+                {
+                    mailMessage.ReplyTo = new MailAddress(m_replyTo);
+                }
+                mailMessage.Subject = m_subject;
+                mailMessage.Priority = m_mailPriority;
 
-			// TODO: Consider using SendAsync to send the message without blocking. This would be a change in
-			// behaviour compared to .NET 1.x. We would need a SendCompletedCallback to log errors.
-			smtpClient.Send(mailMessage);
+                // TODO: Consider using SendAsync to send the message without blocking. This would be a change in
+                // behaviour compared to .NET 1.x. We would need a SendCompletedCallback to log errors.
+                smtpClient.Send(mailMessage);
+            }
 #else
 				// .NET 1.x uses the System.Web.Mail API for sending Mail
 
@@ -382,6 +476,14 @@ namespace log4net.Appender
 				mailMessage.Body = messageBody;
 				mailMessage.From = m_from;
 				mailMessage.To = m_to;
+                if (m_cc != null && m_cc.Length > 0)
+                {
+                    mailMessage.Cc = m_cc;
+                }
+                if (m_bcc != null && m_bcc.Length > 0)
+                {
+                    mailMessage.Bcc = m_bcc;
+                }
 				mailMessage.Subject = m_subject;
 				mailMessage.Priority = m_mailPriority;
 
@@ -440,13 +542,15 @@ namespace log4net.Appender
 
 				SmtpMail.Send(mailMessage);
 #endif // if NET_2_0
-		}
+        }
 
 		#endregion // Protected Methods
 
 		#region Private Instance Fields
 
 		private string m_to;
+        private string m_cc;
+        private string m_bcc;
 		private string m_from;
 		private string m_subject;
 		private string m_smtpHost;
@@ -460,6 +564,11 @@ namespace log4net.Appender
 		private int m_port = 25;
 
 		private MailPriority m_mailPriority = MailPriority.Normal;
+
+#if NET_2_0
+        private bool m_enableSsl = false;
+        private string m_replyTo;
+#endif
 
 		#endregion // Private Instance Fields
 

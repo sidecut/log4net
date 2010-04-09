@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -17,7 +18,7 @@
 #endregion
 
 using System;
-
+using System.Collections;
 using log4net.ObjectRenderer;
 using log4net.Core;
 using log4net.Util;
@@ -49,6 +50,7 @@ namespace log4net.Repository
 		private LevelMap m_levelMap;
 		private Level m_threshold;
 		private bool m_configured;
+        private ICollection m_configurationMessages;
 		private event LoggerRepositoryShutdownEventHandler m_shutdownEvent;
 		private event LoggerRepositoryConfigurationResetEventHandler m_configurationResetEvent;
 		private event LoggerRepositoryConfigurationChangedEventHandler m_configurationChangedEvent;
@@ -85,6 +87,7 @@ namespace log4net.Repository
 			m_rendererMap = new RendererMap();
 			m_pluginMap = new PluginMap(this);
 			m_levelMap = new LevelMap();
+            m_configurationMessages = EmptyCollection.Instance;
 			m_configured = false;
 
 			AddBuiltinLevels();
@@ -139,7 +142,7 @@ namespace log4net.Repository
 				else
 				{
 					// Must not set threshold to null
-					LogLog.Warn("LoggerRepositorySkeleton: Threshold cannot be set to null. Setting to ALL");
+					LogLog.Warn(declaringType, "LoggerRepositorySkeleton: Threshold cannot be set to null. Setting to ALL");
 					m_threshold = Level.All;
 				}
 			}
@@ -284,6 +287,7 @@ namespace log4net.Repository
 			// Clear internal data structures
 			m_rendererMap.Clear();
 			m_levelMap.Clear();
+            m_configurationMessages = EmptyCollection.Instance;
 
 			// Add the predefined levels to the map
 			AddBuiltinLevels();
@@ -329,7 +333,17 @@ namespace log4net.Repository
 			set { m_configured = value; }
 		}
 
-		/// <summary>
+        /// <summary>
+        /// Contains a list of internal messages captures during the 
+        /// last configuration.
+        /// </summary>
+	    virtual public ICollection ConfigurationMessages
+	    {
+            get { return m_configurationMessages; }
+            set { m_configurationMessages = value; }
+	    }
+
+	    /// <summary>
 		/// Event to notify that the repository has been shutdown.
 		/// </summary>
 		/// <value>
@@ -407,6 +421,19 @@ namespace log4net.Repository
 		abstract public log4net.Appender.IAppender[] GetAppenders();
 
 		#endregion
+
+	    #region Private Static Fields
+
+	    /// <summary>
+	    /// The fully qualified type of the LoggerRepositorySkeleton class.
+	    /// </summary>
+	    /// <remarks>
+	    /// Used by the internal logger to record the Type of the
+	    /// log message.
+	    /// </remarks>
+	    private readonly static Type declaringType = typeof(LoggerRepositorySkeleton);
+
+	    #endregion Private Static Fields
 
 		private void AddBuiltinLevels()
 		{
@@ -528,7 +555,7 @@ namespace log4net.Repository
 			LoggerRepositoryConfigurationChangedEventHandler handler = m_configurationChangedEvent;
 			if (handler != null)
 			{
-				handler(this, EventArgs.Empty);
+				handler(this, e);
 			}
 		}
 

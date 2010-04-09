@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -92,7 +93,7 @@ namespace log4net.Util
 				}
 				catch(Exception ex)
 				{
-					LogLog.Error("AppenderAttachedImpl: Failed to append to appender [" + appender.Name + "]", ex);
+					LogLog.Error(declaringType, "Failed to append to appender [" + appender.Name + "]", ex);
 				}
 			}
 			return m_appenderList.Count;
@@ -144,7 +145,7 @@ namespace log4net.Util
 				}
 				catch(Exception ex)
 				{
-					LogLog.Error("AppenderAttachedImpl: Failed to append to appender [" + appender.Name + "]", ex);
+					LogLog.Error(declaringType, "Failed to append to appender [" + appender.Name + "]", ex);
 				}
 			}
 			return m_appenderList.Count;
@@ -152,7 +153,9 @@ namespace log4net.Util
 
 		#endregion Public Instance Methods
 
-		/// <summary>
+        #region Private Static Methods
+
+        /// <summary>
 		/// Calls the DoAppende method on the <see cref="IAppender"/> with 
 		/// the <see cref="LoggingEvent"/> objects supplied.
 		/// </summary>
@@ -180,11 +183,13 @@ namespace log4net.Util
 					appender.DoAppend(loggingEvent);
 				}
 			}
-		}
+        }
 
-		#region Implementation of IAppenderAttachable
+        #endregion
 
-		/// <summary>
+        #region Implementation of IAppenderAttachable
+
+        /// <summary>
 		/// Attaches an appender.
 		/// </summary>
 		/// <param name="newAppender">The appender to add.</param>
@@ -288,7 +293,7 @@ namespace log4net.Util
 					}
 					catch(Exception ex)
 					{
-						LogLog.Error("AppenderAttachedImpl: Failed to Close appender ["+appender.Name+"]", ex);
+						LogLog.Error(declaringType, "Failed to Close appender ["+appender.Name+"]", ex);
 					}
 				}
 				m_appenderList = null;	  
@@ -354,5 +359,18 @@ namespace log4net.Util
 		private IAppender[] m_appenderArray;
 
 		#endregion Private Instance Fields
+
+	    #region Private Static Fields
+
+	    /// <summary>
+	    /// The fully qualified type of the AppenderAttachedImpl class.
+	    /// </summary>
+	    /// <remarks>
+	    /// Used by the internal logger to record the Type of the
+	    /// log message.
+	    /// </remarks>
+	    private readonly static Type declaringType = typeof(AppenderAttachedImpl);
+
+	    #endregion Private Static Fields
 	}
 }

@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -17,13 +18,14 @@
 #endregion
 
 using System;
+using System.Threading;
 
 using log4net.Config;
 using log4net.Layout;
 using log4net.Repository;
-
 using log4net.Tests.Appender;
 using log4net.Util;
+
 using NUnit.Framework;
 
 namespace log4net.Tests.Context
@@ -34,9 +36,11 @@ namespace log4net.Tests.Context
 	/// <remarks>
 	/// Used for internal unit testing the <see cref="ThreadContext"/> class.
 	/// </remarks>
-	[TestFixture] public class ThreadContextTest
+	[TestFixture]
+	public class ThreadContextTest
 	{
-		[Test] public void TestThreadPropertiesPattern()
+		[Test]
+		public void TestThreadPropertiesPattern()
 		{
 			StringAppender stringAppender = new StringAppender();
 			stringAppender.Layout = new PatternLayout("%property{prop1}");
@@ -63,7 +67,8 @@ namespace log4net.Tests.Context
 			stringAppender.Reset();
 		}
 
-		[Test] public void TestThreadStackPattern()
+		[Test]
+		public void TestThreadStackPattern()
 		{
 			StringAppender stringAppender = new StringAppender();
 			stringAppender.Layout = new PatternLayout("%property{prop1}");
@@ -89,7 +94,8 @@ namespace log4net.Tests.Context
 			stringAppender.Reset();
 		}
 
-		[Test] public void TestThreadStackPattern2()
+		[Test]
+		public void TestThreadStackPattern2()
 		{
 			StringAppender stringAppender = new StringAppender();
 			stringAppender.Layout = new PatternLayout("%property{prop1}");
@@ -122,7 +128,8 @@ namespace log4net.Tests.Context
 			stringAppender.Reset();
 		}
 
-		[Test] public void TestThreadStackPatternNullVal()
+		[Test]
+		public void TestThreadStackPatternNullVal()
 		{
 			StringAppender stringAppender = new StringAppender();
 			stringAppender.Layout = new PatternLayout("%property{prop1}");
@@ -148,7 +155,8 @@ namespace log4net.Tests.Context
 			stringAppender.Reset();
 		}
 
-		[Test] public void TestThreadStackPatternNullVal2()
+		[Test]
+		public void TestThreadStackPatternNullVal2()
 		{
 			StringAppender stringAppender = new StringAppender();
 			stringAppender.Layout = new PatternLayout("%property{prop1}");
@@ -179,6 +187,34 @@ namespace log4net.Tests.Context
 			log1.Info("TestMessage");
 			Assert.AreEqual(SystemInfo.NullText, stringAppender.GetString(), "Test thread stack value removed");
 			stringAppender.Reset();
+		}
+
+		[Test]
+		public void TestBackgroundThreadContextProperty()
+		{
+			StringAppender stringAppender = new StringAppender();
+			stringAppender.Layout = new PatternLayout("%property{DateTimeTodayToString}");
+
+			ILoggerRepository rep = LogManager.CreateRepository("TestBackgroundThreadContextPropertyRepository");
+			BasicConfigurator.Configure(rep, stringAppender);
+
+			Thread thread = new Thread(new ThreadStart(ExecuteBackgroundThread));
+			thread.Start();
+
+			Thread.CurrentThread.Join(2000);
+		}
+
+		private static void ExecuteBackgroundThread()
+		{
+			ILog log = LogManager.GetLogger("TestBackgroundThreadContextPropertyRepository", "ExecuteBackGroundThread");
+			ThreadContext.Properties["DateTimeTodayToString"] = DateTime.Today.ToString();
+
+			log.Info("TestMessage");
+
+			Repository.Hierarchy.Hierarchy hierarchyLoggingRepository = (Repository.Hierarchy.Hierarchy)log.Logger.Repository;
+			StringAppender stringAppender = (StringAppender)hierarchyLoggingRepository.Root.Appenders[0];
+
+			Assert.AreEqual(DateTime.Today.ToString(), stringAppender.GetString());
 		}
 	}
 }

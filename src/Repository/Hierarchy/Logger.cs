@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2006 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -424,16 +425,16 @@ namespace log4net.Repository.Hierarchy
 			{
 				if (IsEnabledFor(level))
 				{
-					ForcedLog((callerStackBoundaryDeclaringType != null) ? callerStackBoundaryDeclaringType : ThisDeclaringType, level, message, exception);
+                    ForcedLog((callerStackBoundaryDeclaringType != null) ? callerStackBoundaryDeclaringType : declaringType, level, message, exception);
 				}
 			}
 			catch (Exception ex)
 			{
-				log4net.Util.LogLog.Error("Log: Exception while logging", ex);
+				log4net.Util.LogLog.Error(declaringType, "Exception while logging", ex);
 			}
 			catch
 			{
-				log4net.Util.LogLog.Error("Log: Exception while logging");
+				log4net.Util.LogLog.Error(declaringType, "Exception while logging");
 			}
 		}
 
@@ -464,11 +465,11 @@ namespace log4net.Repository.Hierarchy
 			}
 			catch (Exception ex)
 			{
-				log4net.Util.LogLog.Error("Log: Exception while logging", ex);
+				log4net.Util.LogLog.Error(declaringType, "Exception while logging", ex);
 			}
 			catch
 			{
-				log4net.Util.LogLog.Error("Log: Exception while logging");
+				log4net.Util.LogLog.Error(declaringType, "Exception while logging");
 			}
 		}
 
@@ -502,11 +503,11 @@ namespace log4net.Repository.Hierarchy
 			}
 			catch (Exception ex)
 			{
-				log4net.Util.LogLog.Error("Log: Exception while logging", ex);
+				log4net.Util.LogLog.Error(declaringType, "Exception while logging", ex);
 			}
 			catch
 			{
-				log4net.Util.LogLog.Error("Log: Exception while logging");
+				log4net.Util.LogLog.Error(declaringType, "Exception while logging");
 			}
 			return false;
 		}
@@ -592,15 +593,15 @@ namespace log4net.Repository.Hierarchy
 			//
 			if (!m_hierarchy.EmittedNoAppenderWarning && writes == 0) 
 			{
-				LogLog.Debug("Logger: No appenders could be found for logger [" + Name + "] repository [" + Repository.Name + "]");
-				LogLog.Debug("Logger: Please initialize the log4net system properly.");
+				LogLog.Debug(declaringType, "No appenders could be found for logger [" + Name + "] repository [" + Repository.Name + "]");
+				LogLog.Debug(declaringType, "Please initialize the log4net system properly.");
 				try
 				{
-					LogLog.Debug("Logger:    Current AppDomain context information: ");
-					LogLog.Debug("Logger:       BaseDirectory   : " + SystemInfo.ApplicationBaseDirectory);
+					LogLog.Debug(declaringType, "    Current AppDomain context information: ");
+					LogLog.Debug(declaringType, "       BaseDirectory   : " + SystemInfo.ApplicationBaseDirectory);
 #if !NETCF
-					LogLog.Debug("Logger:       FriendlyName    : " + AppDomain.CurrentDomain.FriendlyName);
-					LogLog.Debug("Logger:       DynamicDirectory: " + AppDomain.CurrentDomain.DynamicDirectory);
+					LogLog.Debug(declaringType, "       FriendlyName    : " + AppDomain.CurrentDomain.FriendlyName);
+					LogLog.Debug(declaringType, "       DynamicDirectory: " + AppDomain.CurrentDomain.DynamicDirectory);
 #endif
 				}
 				catch(System.Security.SecurityException)
@@ -658,7 +659,7 @@ namespace log4net.Repository.Hierarchy
 		{
 			if (IsEnabledFor(level))
 			{
-				ForcedLog(ThisDeclaringType, level, message, exception);
+                ForcedLog(declaringType, level, message, exception);
 			}
 		}
 
@@ -702,10 +703,10 @@ namespace log4net.Repository.Hierarchy
 
 		#region Private Static Fields
 
-		/// <summary>
-		/// The fully qualified type of the Logger class.
-		/// </summary>
-		private readonly static Type ThisDeclaringType = typeof(Logger);
+        /// <summary>
+        /// The fully qualified type of the Logger class.
+        /// </summary>
+        private readonly static Type declaringType = typeof(Logger);
 
 		#endregion Private Static Fields
 

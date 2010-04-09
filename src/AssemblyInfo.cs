@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2006 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -54,6 +55,8 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyTitle("log4net for .NET Framework 2.0")]
 #elif (NETCF_1_0)
 [assembly: AssemblyTitle("log4net for .NET Compact Framework 1.0")]
+#elif (NETCF_2_0)
+[assembly: AssemblyTitle("log4net for .NET Compact Framework 2.0")]
 #elif (MONO_1_0)
 [assembly: AssemblyTitle("log4net for Mono 1.0")]
 #elif (MONO_2_0)

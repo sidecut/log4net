@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2006 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -23,6 +24,13 @@ using System.IO;
 using log4net.Core;
 using log4net.Layout.Pattern;
 using log4net.Util;
+using log4net.Util.PatternStringConverters;
+using AppDomainPatternConverter=log4net.Layout.Pattern.AppDomainPatternConverter;
+using DatePatternConverter=log4net.Layout.Pattern.DatePatternConverter;
+using IdentityPatternConverter=log4net.Layout.Pattern.IdentityPatternConverter;
+using PropertyPatternConverter=log4net.Layout.Pattern.PropertyPatternConverter;
+using UserNamePatternConverter=log4net.Layout.Pattern.UserNamePatternConverter;
+using UtcDatePatternConverter=log4net.Layout.Pattern.UtcDatePatternConverter;
 
 namespace log4net.Layout
 {
@@ -31,7 +39,7 @@ namespace log4net.Layout
 	/// </summary>
 	/// <remarks>
 	/// <para>
-	/// The goal of this class is to <see cref="PatternLayout.Format"/> a 
+	/// The goal of this class is to <see cref="PatternLayout.Format(TextWriter,LoggingEvent)"/> a 
 	/// <see cref="LoggingEvent"/> as a string. The results
 	/// depend on the <i>conversion pattern</i>.
 	/// </para>
@@ -93,6 +101,30 @@ namespace log4net.Layout
 	///         <description>
 	///				Used to output the friendly name of the AppDomain where the 
 	///				logging event was generated. 
+	///         </description>
+	///     </item>
+	///     <item>
+	///         <term>aspnet-cache</term>
+	///         <description>
+	///				TODO
+	///         </description>
+	///     </item>
+	///     <item>
+	///         <term>aspnet-context</term>
+	///         <description>
+	///				TODO
+	///         </description>
+	///     </item>
+	///     <item>
+	///         <term>aspnet-request</term>
+	///         <description>
+	///				TODO
+	///         </description>
+	///     </item>
+	///     <item>
+	///         <term>aspnet-session</term>
+	///         <description>
+	///				TODO
 	///         </description>
 	///     </item>
 	///     <item>
@@ -405,6 +437,17 @@ namespace log4net.Layout
 	///         <term>r</term>
 	///         <description>Equivalent to <b>timestamp</b></description>
 	///     </item>
+	/// 	<item>
+	///			<term>stacktrace</term> 
+	///			<description>
+	/// 			<para>
+	/// 			Used to output the stack trace of the logging event
+	/// 			The stack trace level specifier may be enclosed 
+	/// 			between braces. For example, <b>%stacktrace{level}</b>.  
+	/// 			If no stack trace level specifier is given then 1 is assumed 
+	/// 			</para>
+	///			</description>
+	///		</item>
 	///     <item>
 	///         <term>t</term>
 	///         <description>Equivalent to <b>thread</b></description>
@@ -767,9 +810,18 @@ namespace log4net.Layout
 		{
 			s_globalRulesRegistry = new Hashtable(45);
 
-			s_globalRulesRegistry.Add("literal", typeof(log4net.Util.PatternStringConverters.LiteralPatternConverter));
-			s_globalRulesRegistry.Add("newline", typeof(log4net.Util.PatternStringConverters.NewLinePatternConverter));
-			s_globalRulesRegistry.Add("n", typeof(log4net.Util.PatternStringConverters.NewLinePatternConverter));
+			s_globalRulesRegistry.Add("literal", typeof(LiteralPatternConverter));
+			s_globalRulesRegistry.Add("newline", typeof(NewLinePatternConverter));
+			s_globalRulesRegistry.Add("n", typeof(NewLinePatternConverter));
+
+// .NET Compact Framework 1.0 has no support for ASP.NET
+// SSCLI 1.0 has no support for ASP.NET
+#if !NETCF && !SSCLI 
+			s_globalRulesRegistry.Add("aspnet-cache", typeof(AspNetCachePatternConverter));
+			s_globalRulesRegistry.Add("aspnet-context", typeof(AspNetContextPatternConverter));
+			s_globalRulesRegistry.Add("aspnet-request", typeof(AspNetRequestPatternConverter));
+			s_globalRulesRegistry.Add("aspnet-session", typeof(AspNetSessionPatternConverter));
+#endif
 
 			s_globalRulesRegistry.Add("c", typeof(LoggerPatternConverter));
 			s_globalRulesRegistry.Add("logger", typeof(LoggerPatternConverter));
@@ -807,15 +859,18 @@ namespace log4net.Layout
 
 			s_globalRulesRegistry.Add("r", typeof(RelativeTimePatternConverter));
 			s_globalRulesRegistry.Add("timestamp", typeof(RelativeTimePatternConverter));
+			
+			s_globalRulesRegistry.Add("stacktrace", typeof(StackTracePatternConverter));
+            s_globalRulesRegistry.Add("stacktracedetail", typeof(StackTraceDetailPatternConverter));
 
 			s_globalRulesRegistry.Add("t", typeof(ThreadPatternConverter));
 			s_globalRulesRegistry.Add("thread", typeof(ThreadPatternConverter));
 
-			// For backwards compatibility the NDC patters
+			// For backwards compatibility the NDC patterns
 			s_globalRulesRegistry.Add("x", typeof(NdcPatternConverter));
 			s_globalRulesRegistry.Add("ndc", typeof(NdcPatternConverter));
 
-			// For backwards compatibility the MDC patters just do a property lookup
+			// For backwards compatibility the MDC patterns just do a property lookup
 			s_globalRulesRegistry.Add("X", typeof(PropertyPatternConverter));
 			s_globalRulesRegistry.Add("mdc", typeof(PropertyPatternConverter));
 
@@ -924,7 +979,10 @@ namespace log4net.Layout
 			// Add all the builtin patterns
 			foreach(DictionaryEntry entry in s_globalRulesRegistry)
 			{
-				patternParser.PatternConverters[entry.Key] = entry.Value;
+                ConverterInfo converterInfo = new ConverterInfo();
+                converterInfo.Name = (string)entry.Key;
+                converterInfo.Type = (Type)entry.Value;
+                patternParser.PatternConverters[entry.Key] = converterInfo;
 			}
 			// Add the instance patterns
 			foreach(DictionaryEntry entry in m_instanceRulesRegistry)
@@ -1025,7 +1083,13 @@ namespace log4net.Layout
 		/// </remarks>
 		public void AddConverter(ConverterInfo converterInfo)
 		{
-			AddConverter(converterInfo.Name, converterInfo.Type);
+            if (converterInfo == null) throw new ArgumentNullException("converterInfo");
+
+            if (!typeof(PatternConverter).IsAssignableFrom(converterInfo.Type))
+            {
+                throw new ArgumentException("The converter type specified [" + converterInfo.Type + "] must be a subclass of log4net.Util.PatternConverter", "converterInfo");
+            }
+            m_instanceRulesRegistry[converterInfo.Name] = converterInfo;
 		}
 
 		/// <summary>
@@ -1046,66 +1110,14 @@ namespace log4net.Layout
 		/// </remarks>
 		public void AddConverter(string name, Type type)
 		{
-			if (name == null) throw new ArgumentNullException("name");
-			if (type == null) throw new ArgumentNullException("type");
+            if (name == null) throw new ArgumentNullException("name");
+            if (type == null) throw new ArgumentNullException("type");
 
-			if (!typeof(PatternConverter).IsAssignableFrom(type))
-			{
-				throw new ArgumentException("The converter type specified ["+type+"] must be a subclass of log4net.Util.PatternConverter", "type");
-			}
-			m_instanceRulesRegistry[name] = type;
-		}
+            ConverterInfo converterInfo = new ConverterInfo();
+            converterInfo.Name = name;
+            converterInfo.Type = type;
 
-		/// <summary>
-		/// Wrapper class used to map converter names to converter types
-		/// </summary>
-		/// <remarks>
-		/// <para>
-		/// Pattern converter info class used during configuration to
-		/// pass to the <see cref="PatternLayout.AddConverter(ConverterInfo)"/>
-		/// method.
-		/// </para>
-		/// </remarks>
-		public sealed class ConverterInfo
-		{
-			private string m_name;
-			private Type m_type;
-
-			/// <summary>
-			/// default constructor
-			/// </summary>
-			public ConverterInfo()
-			{
-			}
-
-			/// <summary>
-			/// Gets or sets the name of the conversion pattern
-			/// </summary>
-			/// <remarks>
-			/// <para>
-			/// The name of the pattern in the format string
-			/// </para>
-			/// </remarks>
-			public string Name
-			{
-				get { return m_name; }
-				set { m_name = value; }
-			}
-
-			/// <summary>
-			/// Gets or sets the type of the converter
-			/// </summary>
-			/// <remarks>
-			/// <para>
-			/// The value specified must extend the 
-			/// <see cref="PatternConverter"/> type.
-			/// </para>
-			/// </remarks>
-			public Type Type
-			{
-				get { return m_type; }
-				set { m_type = value; }
-			}
+            AddConverter(converterInfo);
 		}
 	}
 }

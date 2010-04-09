@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -21,9 +22,9 @@
 
 using System;
 using System.Collections;
+using System.Configuration;
 using System.Data;
 using System.IO;
-using System.Reflection;
 
 using log4net.Util;
 using log4net.Layout;
@@ -172,7 +173,30 @@ namespace log4net.Appender
 			set { m_connectionString = value; }
 		}
 
-		/// <summary>
+	    /// <summary>
+	    /// The appSettings key from App.Config that contains the connection string.
+	    /// </summary>
+	    public string AppSettingsKey
+	    {
+	        get { return m_appSettingsKey; }
+	        set { m_appSettingsKey = value; }
+	    }
+
+#if NET_2_0
+	    /// <summary>
+        /// The connectionStrings key from App.Config that contains the connection string.
+	    /// </summary>
+        /// <remarks>
+        /// This property requires at least .NET 2.0.
+        /// </remarks>
+	    public string ConnectionStringName
+	    {
+	        get { return m_connectionStringName; }
+	        set { m_connectionStringName = value; }
+	    }
+#endif
+
+	    /// <summary>
 		/// Gets or sets the type name of the <see cref="IDbConnection"/> connection
 		/// that should be created.
 		/// </summary>
@@ -352,8 +376,8 @@ namespace log4net.Appender
 		/// </remarks>
 		protected IDbConnection Connection 
 		{
-			get { return this.m_dbConnection; }
-			set { this.m_dbConnection = value; }
+			get { return m_dbConnection; }
+			set { m_dbConnection = value; }
 		}
 
 		#endregion // Protected Instance Properties
@@ -407,32 +431,8 @@ namespace log4net.Appender
 		override protected void OnClose() 
 		{
 			base.OnClose();
-
-			// Close the cached command and connection objects
-			if (m_dbCommand != null)
-			{
-				try
-				{
-					m_dbCommand.Dispose();
-				}
-				catch (Exception ex)
-				{
-					LogLog.Warn("AdoNetAppender: Exception while disposing cached command object", ex);
-				}
-				m_dbCommand = null;
-			}
-			if (m_dbConnection != null)
-			{
-				try
-				{
-					m_dbConnection.Close();
-				}
-				catch (Exception ex)
-				{
-					LogLog.Warn("AdoNetAppender: Exception while disposing cached connection object", ex);
-				}
-				m_dbConnection = null;
-			}
+            DisposeCommand(false);
+            DiposeConnection();
 		}
 
 		#endregion
@@ -453,7 +453,7 @@ namespace log4net.Appender
 		{
 			if (m_reconnectOnError && (m_dbConnection == null || m_dbConnection.State != ConnectionState.Open))
 			{
-				LogLog.Debug("AdoNetAppender: Attempting to reconnect to database. Current Connection State: " + ((m_dbConnection==null)?"<null>":m_dbConnection.State.ToString()) );
+				LogLog.Debug(declaringType, "Attempting to reconnect to database. Current Connection State: " + ((m_dbConnection==null)?SystemInfo.NullText:m_dbConnection.State.ToString()) );
 
 				InitializeDatabaseConnection();
 				InitializeDatabaseCommand();
@@ -581,7 +581,7 @@ namespace log4net.Appender
 						// Get the command text from the Layout
 						string logStatement = GetLogStatement(e);
 
-						LogLog.Debug("AdoNetAppender: LogStatement ["+logStatement+"]");
+						LogLog.Debug(declaringType, "LogStatement ["+logStatement+"]");
 
 						dbCmd.CommandText = logStatement;
 						dbCmd.ExecuteNonQuery();
@@ -605,7 +605,7 @@ namespace log4net.Appender
 		{
 			if (Layout == null)
 			{
-				ErrorHandler.Error("ADOAppender: No Layout specified.");
+				ErrorHandler.Error("AdoNetAppender: No Layout specified.");
 				return "";
 			}
 			else
@@ -616,61 +616,71 @@ namespace log4net.Appender
 			}
 		}
 
-		/// <summary>
-		/// Connects to the database.
-		/// </summary>		
-		private void InitializeDatabaseConnection()
-		{
-			try
-			{
-				// Cleanup any existing command or connection
-				if (m_dbCommand != null)
-				{
-					try
-					{
-						m_dbCommand.Dispose();
-					}
-					catch (Exception ex)
-					{
-						LogLog.Warn("AdoNetAppender: Exception while disposing cached command object", ex);
-					}
-					m_dbCommand = null;
-				}
-				if (m_dbConnection != null)
-				{
-					try
-					{
-						m_dbConnection.Close();
-					}
-					catch (Exception ex)
-					{
-						LogLog.Warn("AdoNetAppender: Exception while disposing cached connection object", ex);
-					}
-					m_dbConnection = null;
-				}
+        /// <summary>
+        /// Creates an <see cref="IDbConnection"/> instance used to connect to the database.
+        /// </summary>
+        /// <remarks>
+        /// This method is called whenever a new IDbConnection is needed (i.e. when a reconnect is necessary).
+        /// </remarks>
+        /// <param name="connectionType">The <see cref="Type"/> of the <see cref="IDbConnection"/> object.</param>
+        /// <param name="connectionString">The connectionString output from the ResolveConnectionString method.</param>
+        /// <returns>An <see cref="IDbConnection"/> instance with a valid connection string.</returns>
+        virtual protected IDbConnection CreateConnection(Type connectionType, string connectionString)
+        {
+            IDbConnection connection = (IDbConnection)Activator.CreateInstance(connectionType);
+            connection.ConnectionString = connectionString;
+            return connection;
+        }
 
-				// Create the connection object
-				m_dbConnection = (IDbConnection)Activator.CreateInstance(ResolveConnectionType());
-			
-				// Set the connection string
-				m_dbConnection.ConnectionString = m_connectionString;
+	    /// <summary>
+        /// Resolves the connection string from the ConnectionString, ConnectionStringName, or AppSettingsKey
+        /// property.
+        /// </summary>
+        /// <remarks>
+        /// ConnectiongStringName is only supported on .NET 2.0 and higher.
+        /// </remarks>
+        /// <param name="connectionStringContext">Additional information describing the connection string.</param>
+        /// <returns>A connection string used to connect to the database.</returns>
+        virtual protected string ResolveConnectionString(out string connectionStringContext)
+        {
+            if (m_connectionString != null && m_connectionString.Length > 0)
+            {
+                connectionStringContext = "ConnectionString";
+                return m_connectionString;
+            }
 
-				using(SecurityContext.Impersonate(this))
-				{
-					// Open the database connection
-					m_dbConnection.Open();
-				}
-			}
-			catch (System.Exception e)
-			{
-				// Sadly, your connection string is bad.
-				ErrorHandler.Error("Could not open database connection [" + m_connectionString + "]", e);
-	 
-				m_dbConnection = null;
-			}
-		}
+#if NET_2_0
+            if (!String.IsNullOrEmpty(m_connectionStringName))
+            {
+                ConnectionStringSettings settings = ConfigurationManager.ConnectionStrings[m_connectionStringName];
+                if (settings != null)
+                {
+                    connectionStringContext = "ConnectionStringName";
+                    return settings.ConnectionString;
+                }
+                else
+                {
+                    throw new LogException("Unable to find [" + m_connectionStringName + "] ConfigurationManager.ConnectionStrings item");
+                }
+            }
+#endif
 
-		/// <summary>
+            if (m_appSettingsKey != null && m_appSettingsKey.Length > 0)
+            {
+                connectionStringContext = "AppSettingsKey";
+                string appSettingsConnectionString = SystemInfo.GetAppSetting(m_appSettingsKey);
+                if (appSettingsConnectionString == null || appSettingsConnectionString.Length == 0)
+                {
+                    throw new LogException("Unable to find [" + m_appSettingsKey + "] AppSettings key.");
+                }
+                return appSettingsConnectionString;
+            }
+
+            connectionStringContext = "Unable to resolve connection string from ConnectionString, ConnectionStrings, or AppSettings.";
+            return string.Empty;
+        }
+
+	    /// <summary>
 		/// Retrieves the class type of the ADO.NET provider.
 		/// </summary>
 		/// <remarks>
@@ -698,116 +708,163 @@ namespace log4net.Appender
 			}
 		}
 
-		/// <summary>
-		/// Prepares the database command and initialize the parameters.
-		/// </summary>
-		private void InitializeDatabaseCommand()
-		{
-			if (m_dbConnection != null && m_usePreparedCommand)
-			{
-				try
-				{
-					// Cleanup any existing command or connection
-					if (m_dbCommand != null)
-					{
-						try
-						{
-							m_dbCommand.Dispose();
-						}
-						catch (Exception ex)
-						{
-							LogLog.Warn("AdoNetAppender: Exception while disposing cached command object", ex);
-						}
-						m_dbCommand = null;
-					}
-
-					// Create the command object
-					m_dbCommand = m_dbConnection.CreateCommand();
-		
-					// Set the command string
-					m_dbCommand.CommandText = m_commandText;
-
-					// Set the command type
-					m_dbCommand.CommandType = m_commandType;
-				}
-				catch(System.Exception e)
-				{
-					ErrorHandler.Error("Could not create database command ["+m_commandText+"]", e);	 
-
-					if (m_dbCommand != null)
-					{
-						try
-						{
-							m_dbCommand.Dispose();
-						}
-						catch
-						{
-							// Ignore exception
-						}
-						m_dbCommand = null;
-					}
-				}
-
-				if (m_dbCommand != null)
-				{
-					try
-					{
-						foreach(AdoNetAppenderParameter param in m_parameters)
-						{
-							try
-							{
-								param.Prepare(m_dbCommand);
-							}
-							catch(System.Exception e)
-							{
-								ErrorHandler.Error("Could not add database command parameter ["+param.ParameterName+"]", e);	 
-								throw;
-							}
-						}
-					}
-					catch
-					{
-						try
-						{
-							m_dbCommand.Dispose();
-						}
-						catch
-						{
-							// Ignore exception
-						}
-						m_dbCommand = null;
-					}
-				}
-
-				if (m_dbCommand != null)
-				{
-					try
-					{
-						// Prepare the command statement.
-						m_dbCommand.Prepare();
-					}
-					catch (System.Exception e)
-					{
-						ErrorHandler.Error("Could not prepare database command ["+m_commandText+"]", e);
-						try
-						{
-							m_dbCommand.Dispose();
-						}
-						catch
-						{
-							// Ignore exception
-						}
-						m_dbCommand = null;
-					}
-				}
-			}
-		}
-
 		#endregion // Protected Instance Methods
 
-		#region Protected Instance Fields
+        #region Private Instance Methods
 
-		/// <summary>
+        /// <summary>
+        /// Prepares the database command and initialize the parameters.
+        /// </summary>
+        private void InitializeDatabaseCommand()
+        {
+            if (m_dbConnection != null && m_usePreparedCommand)
+            {
+                try
+                {
+                    DisposeCommand(false);
+
+                    // Create the command object
+                    m_dbCommand = m_dbConnection.CreateCommand();
+
+                    // Set the command string
+                    m_dbCommand.CommandText = m_commandText;
+
+                    // Set the command type
+                    m_dbCommand.CommandType = m_commandType;
+                }
+                catch (Exception e)
+                {
+                    ErrorHandler.Error("Could not create database command [" + m_commandText + "]", e);
+
+                    DisposeCommand(true);
+                }
+
+                if (m_dbCommand != null)
+                {
+                    try
+                    {
+                        foreach (AdoNetAppenderParameter param in m_parameters)
+                        {
+                            try
+                            {
+                                param.Prepare(m_dbCommand);
+                            }
+                            catch (Exception e)
+                            {
+                                ErrorHandler.Error("Could not add database command parameter [" + param.ParameterName + "]", e);
+                                throw;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        DisposeCommand(true);
+                    }
+                }
+
+                if (m_dbCommand != null)
+                {
+                    try
+                    {
+                        // Prepare the command statement.
+                        m_dbCommand.Prepare();
+                    }
+                    catch (Exception e)
+                    {
+                        ErrorHandler.Error("Could not prepare database command [" + m_commandText + "]", e);
+
+                        DisposeCommand(true);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Connects to the database.
+        /// </summary>		
+        private void InitializeDatabaseConnection()
+        {
+            string connectionStringContext = "Unable to determine connection string context.";
+            string resolvedConnectionString = string.Empty;
+
+            try
+            {
+                DisposeCommand(true);
+                DiposeConnection();
+
+                // Set the connection string
+                resolvedConnectionString = ResolveConnectionString(out connectionStringContext);
+
+                m_dbConnection = CreateConnection(ResolveConnectionType(), resolvedConnectionString);
+
+                using (SecurityContext.Impersonate(this))
+                {
+                    // Open the database connection
+                    m_dbConnection.Open();
+                }
+            }
+            catch (Exception e)
+            {
+                // Sadly, your connection string is bad.
+                ErrorHandler.Error("Could not open database connection [" + resolvedConnectionString + "]. Connection string context [" + connectionStringContext + "].", e);
+
+                m_dbConnection = null;
+            }
+        }
+
+        /// <summary>
+        /// Cleanup the existing command.
+        /// </summary>
+        /// <param name="ignoreException">
+        /// If true, a message will be written using LogLog.Warn if an exception is encountered when calling Dispose.
+        /// </param>
+        private void DisposeCommand(bool ignoreException)
+        {
+            // Cleanup any existing command or connection
+            if (m_dbCommand != null)
+            {
+                try
+                {
+                    m_dbCommand.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    if (!ignoreException)
+                    {
+                        LogLog.Warn(declaringType, "Exception while disposing cached command object", ex);
+                    }
+                }
+                m_dbCommand = null;
+            }
+        }
+
+        /// <summary>
+        /// Cleanup the existing connection.
+        /// </summary>
+        /// <remarks>
+        /// Calls the IDbConnection's <see cref="IDbConnection.Close"/> method.
+        /// </remarks>
+        private void DiposeConnection()
+        {
+            if (m_dbConnection != null)
+            {
+                try
+                {
+                    m_dbConnection.Close();
+                }
+                catch (Exception ex)
+                {
+                    LogLog.Warn(declaringType, "Exception while disposing cached connection object", ex);
+                }
+                m_dbConnection = null;
+            }
+        }
+
+        #endregion // Private Instance Methods
+
+        #region Protected Instance Fields
+
+        /// <summary>
 		/// Flag to indicate if we are using a command object
 		/// </summary>
 		/// <remarks>
@@ -853,7 +910,19 @@ namespace log4net.Appender
 		/// </summary>
 		private string m_connectionString;
 
-		/// <summary>
+        /// <summary>
+        /// The appSettings key from App.Config that contains the connection string.
+        /// </summary>
+        private string m_appSettingsKey;
+
+#if NET_2_0
+        /// <summary>
+        /// The connectionStrings key from App.Config that contains the connection string.
+        /// </summary>
+        private string m_connectionStringName;
+#endif
+
+        /// <summary>
 		/// String type name of the <see cref="IDbConnection"/> type name.
 		/// </summary>
 		private string m_connectionType;
@@ -879,6 +948,19 @@ namespace log4net.Appender
 		private bool m_reconnectOnError;
 
 		#endregion // Private Instance Fields
+
+        #region Private Static Fields
+
+        /// <summary>
+        /// The fully qualified type of the AdoNetAppender class.
+        /// </summary>
+        /// <remarks>
+        /// Used by the internal logger to record the Type of the
+        /// log message.
+        /// </remarks>
+        private readonly static Type declaringType = typeof(AdoNetAppender);
+
+        #endregion Private Static Fields
 	}
 
 	/// <summary>

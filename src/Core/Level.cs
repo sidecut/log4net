@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -485,7 +486,7 @@ namespace log4net.Core
 				return 1;
 			}
 
-			return l.m_levelValue - r.m_levelValue;
+			return l.m_levelValue.CompareTo(r.m_levelValue);
 		}
 
 		#endregion Public Static Methods
@@ -496,6 +497,12 @@ namespace log4net.Core
 		/// The <see cref="Off" /> level designates a higher level than all the rest.
 		/// </summary>
 		public readonly static Level Off = new Level(int.MaxValue, "OFF");
+
+        /// <summary>
+        /// The <see cref="Emergency" /> level designates very severe error events. 
+        /// System unusable, emergencies.
+        /// </summary>
+        public readonly static Level Log4Net_Debug = new Level(120000, "log4net:DEBUG");
 
 		/// <summary>
 		/// The <see cref="Emergency" /> level designates very severe error events. 

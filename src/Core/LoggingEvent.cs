@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -17,10 +18,10 @@
 #endregion
 
 using System;
-using System.Runtime.Serialization;
 using System.Collections;
 using System.IO;
 #if (!NETCF)
+using System.Runtime.Serialization;
 using System.Security.Principal;
 #endif
 
@@ -227,7 +228,7 @@ namespace log4net.Core
 		Exception = 0x100,
 
 		/// <summary>
-		/// Fix the event properties
+		/// Fix the event properties. Active properties must implement <see cref="IFixingRequired"/> in order to be eligible for fixing.
 		/// </summary>
 		Properties = 0x200,
 
@@ -294,6 +295,8 @@ namespace log4net.Core
 		: ISerializable
 #endif
 	{
+	    private readonly static Type declaringType = typeof(LoggingEvent);
+
 		#region Public Instance Constructors
 
 		/// <summary>
@@ -760,7 +763,7 @@ namespace log4net.Core
 						{
 							// This security exception will occur if the caller does not have 
 							// some undefined set of SecurityPermission flags.
-							LogLog.Debug("LoggingEvent: Security exception while trying to get current thread ID. Error Ignored. Empty thread name.");
+							LogLog.Debug(declaringType, "Security exception while trying to get current thread ID. Error Ignored. Empty thread name.");
 
 							// As a last resort use the hash code of the Thread object
 							m_data.ThreadName = System.Threading.Thread.CurrentThread.GetHashCode().ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -845,7 +848,7 @@ namespace log4net.Core
 					{
 						// This security exception will occur if the caller does not have 
 						// some undefined set of SecurityPermission flags.
-						LogLog.Debug("LoggingEvent: Security exception while trying to get current windows identity. Error Ignored. Empty user name.");
+						LogLog.Debug(declaringType, "Security exception while trying to get current windows identity. Error Ignored. Empty user name.");
 
 						m_data.UserName = "";
 					}
@@ -894,7 +897,7 @@ namespace log4net.Core
 					{
 						// This security exception will occur if the caller does not have 
 						// some undefined set of SecurityPermission flags.
-						LogLog.Debug("LoggingEvent: Security exception while trying to get current thread principal. Error Ignored. Empty identity name.");
+						LogLog.Debug(declaringType, "Security exception while trying to get current thread principal. Error Ignored. Empty identity name.");
 
 						m_data.Identity = "";
 					}

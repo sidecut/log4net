@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -40,6 +41,8 @@ namespace log4net.ObjectRenderer
 	/// <author>Gert Driesen</author>
 	public class RendererMap
 	{
+        private readonly static Type declaringType = typeof(RendererMap);
+
 		#region Member Variables
 
 		private System.Collections.Hashtable m_map;
@@ -130,7 +133,7 @@ namespace log4net.ObjectRenderer
 					catch(Exception ex)
 					{
 						// Exception rendering the object
-						log4net.Util.LogLog.Error("RendererMap: Exception while rendering object of type ["+obj.GetType().FullName+"]", ex);
+						log4net.Util.LogLog.Error(declaringType, "Exception while rendering object of type ["+obj.GetType().FullName+"]", ex);
 
 						// return default message
 						string objectTypeName = "";

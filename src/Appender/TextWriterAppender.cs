@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -169,7 +170,7 @@ namespace log4net.Appender
 		/// </summary>
 		/// <remarks>
 		/// <para>
-		/// This method checked if an output target has been set and if a
+		/// This method checks if an output target has been set and if a
 		/// layout has been set. 
 		/// </para>
 		/// </remarks>
@@ -279,7 +280,7 @@ namespace log4net.Appender
 				{
 					if (value == null) 
 					{
-						LogLog.Warn("TextWriterAppender: You have tried to set a null error-handler.");
+						LogLog.Warn(declaringType, "TextWriterAppender: You have tried to set a null error-handler.");
 					} 
 					else 
 					{
@@ -419,8 +420,6 @@ namespace log4net.Appender
 		{
 		}
 
-		#endregion Protected Instance Methods
-
 		/// <summary>
 		/// Gets or sets the <see cref="log4net.Util.QuietTextWriter"/> where logging events
 		/// will be written to. 
@@ -438,11 +437,13 @@ namespace log4net.Appender
 		{
 			get { return m_qtw; }
 			set { m_qtw = value; }
-		}
+        }
 
-		#region Private Instance Fields
+        #endregion Protected Instance Methods
 
-		/// <summary>
+        #region Private Instance Fields
+
+        /// <summary>
 		/// This is the <see cref="log4net.Util.QuietTextWriter"/> where logging events
 		/// will be written to. 
 		/// </summary>
@@ -467,5 +468,18 @@ namespace log4net.Appender
 		private bool m_immediateFlush = true;
 
 		#endregion Private Instance Fields
+
+	    #region Private Static Fields
+
+	    /// <summary>
+	    /// The fully qualified type of the TextWriterAppender class.
+	    /// </summary>
+	    /// <remarks>
+	    /// Used by the internal logger to record the Type of the
+	    /// log message.
+	    /// </remarks>
+	    private readonly static Type declaringType = typeof(TextWriterAppender);
+
+	    #endregion Private Static Fields
 	}
 }

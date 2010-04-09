@@ -1,10 +1,11 @@
-#region Copyright & License
+#region Apache License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -61,7 +62,7 @@ namespace log4net.Util
 	///         <term>date</term>
 	///         <description>
 	/// 			<para>
-	/// 			Used to output the date of the logging event in the local time zone. 
+	/// 			Used to output the current date and time in the local time zone. 
 	/// 			To output the date in universal time use the <c>%utcdate</c> pattern.
 	/// 			The date conversion 
 	/// 			specifier may be followed by a <i>date format specifier</i> enclosed 
@@ -235,7 +236,7 @@ namespace log4net.Util
 	/// </list>
 	/// <para>
 	/// Additional pattern converters may be registered with a specific <see cref="PatternString"/>
-	/// instance using <see cref="AddConverter(PatternString.ConverterInfo)"/> or
+	/// instance using <see cref="AddConverter(ConverterInfo)"/> or
 	/// <see cref="AddConverter(string, Type)" />.
 	/// </para>
 	/// <para>
@@ -287,6 +288,7 @@ namespace log4net.Util
 			s_globalRulesRegistry.Add("date", typeof(DatePatternConverter));
 #if !NETCF
 			s_globalRulesRegistry.Add("env", typeof(EnvironmentPatternConverter));
+            s_globalRulesRegistry.Add("envFolderPath", typeof(EnvironmentFolderPathPatternConverter));
 #endif
 			s_globalRulesRegistry.Add("identity", typeof(IdentityPatternConverter));
 			s_globalRulesRegistry.Add("literal", typeof(LiteralPatternConverter));
@@ -397,7 +399,10 @@ namespace log4net.Util
 			// Add all the builtin patterns
 			foreach(DictionaryEntry entry in s_globalRulesRegistry)
 			{
-				patternParser.PatternConverters.Add(entry.Key, entry.Value);
+                ConverterInfo converterInfo = new ConverterInfo();
+                converterInfo.Name = (string)entry.Key;
+                converterInfo.Type = (Type)entry.Value;
+                patternParser.PatternConverters.Add(entry.Key, converterInfo);
 			}
 			// Add the instance patterns
 			foreach(DictionaryEntry entry in m_instanceRulesRegistry)
@@ -462,7 +467,13 @@ namespace log4net.Util
 		/// </remarks>
 		public void AddConverter(ConverterInfo converterInfo)
 		{
-			AddConverter(converterInfo.Name, converterInfo.Type);
+            if (converterInfo == null) throw new ArgumentNullException("converterInfo");
+
+            if (!typeof(PatternConverter).IsAssignableFrom(converterInfo.Type))
+            {
+                throw new ArgumentException("The converter type specified [" + converterInfo.Type + "] must be a subclass of log4net.Util.PatternConverter", "converterInfo");
+            }
+            m_instanceRulesRegistry[converterInfo.Name] = converterInfo;
 		}
 
 		/// <summary>
@@ -480,66 +491,11 @@ namespace log4net.Util
 			if (name == null) throw new ArgumentNullException("name");
 			if (type == null) throw new ArgumentNullException("type");
 
-			if (!typeof(PatternConverter).IsAssignableFrom(type))
-			{
-				throw new ArgumentException("The converter type specified ["+type+"] must be a subclass of log4net.Util.PatternConverter", "type");
-			}
-			m_instanceRulesRegistry[name] = type;
-		}
+            ConverterInfo converterInfo = new ConverterInfo();
+            converterInfo.Name = name;
+            converterInfo.Type = type;
 
-		/// <summary>
-		/// Wrapper class used to map converter names to converter types
-		/// </summary>
-		/// <remarks>
-		/// <para>
-		/// Wrapper class used to map converter names to converter types
-		/// </para>
-		/// </remarks>
-		public sealed class ConverterInfo
-		{
-			private string m_name;
-			private Type m_type;
-
-			/// <summary>
-			/// default constructor
-			/// </summary>
-			public ConverterInfo()
-			{
-			}
-
-			/// <summary>
-			/// Gets or sets the name of the conversion pattern
-			/// </summary>
-			/// <value>
-			/// The name of the conversion pattern
-			/// </value>
-			/// <remarks>
-			/// <para>
-			/// Gets or sets the name of the conversion pattern
-			/// </para>
-			/// </remarks>
-			public string Name
-			{
-				get { return m_name; }
-				set { m_name = value; }
-			}
-
-			/// <summary>
-			/// Gets or sets the type of the converter
-			/// </summary>
-			/// <value>
-			/// The type of the converter
-			/// </value>
-			/// <remarks>
-			/// <para>
-			/// Gets or sets the type of the converter
-			/// </para>
-			/// </remarks>
-			public Type Type
-			{
-				get { return m_type; }
-				set { m_type = value; }
-			}
+            AddConverter(converterInfo);
 		}
 	}
 }
