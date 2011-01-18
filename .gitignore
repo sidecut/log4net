@@ -1,3 +1,5 @@
 [Bb]in/
 [Oo]bj/
 *.user
+_ReSharper.*
+*.suo
