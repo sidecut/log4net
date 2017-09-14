@@ -33,12 +33,22 @@ namespace log4net.Appender
 	/// that are appended in an in-memory array.
 	/// </para>
 	/// <para>
-	/// Use the <see cref="GetEvents"/> method to get
-	/// the current list of events that have been appended.
+	/// Use the <see cref="M:PopAllEvents()"/> method to get
+	/// and clear the current list of events that have been appended.
 	/// </para>
 	/// <para>
-	/// Use the <see cref="Clear()"/> method to clear the
-	/// current list of events.
+	/// Use the <see cref="M:GetEvents()"/> method to get the current
+	/// list of events that have been appended.  Note there is a
+	/// race-condition when calling <see cref="M:GetEvents()"/> and
+	/// <see cref="M:Clear()"/> in pairs, you better use <see
+	/// mref="M:PopAllEvents()"/> in that case.
+	/// </para>
+	/// <para>
+	/// Use the <see cref="M:Clear()"/> method to clear the
+	/// current list of events.  Note there is a
+	/// race-condition when calling <see cref="M:GetEvents()"/> and
+	/// <see cref="M:Clear()"/> in pairs, you better use <see
+	/// mref="M:PopAllEvents()"/> in that case.
 	/// </para>
 	/// </remarks>
 	/// <author>Julian Biddle</author>
@@ -76,7 +86,10 @@ namespace log4net.Appender
 		/// </remarks>
 		virtual public LoggingEvent[] GetEvents()
 		{
-			return (LoggingEvent[])m_eventsList.ToArray(typeof(LoggingEvent));
+            lock (m_eventsList.SyncRoot)
+            {
+                return (LoggingEvent[]) m_eventsList.ToArray(typeof(LoggingEvent));
+            }
 		}
 
 		/// <summary>
@@ -93,7 +106,7 @@ namespace log4net.Appender
 		/// data to be fixed and stored in the appender, hereby improving performance. 
 		/// </para>
 		/// <para>
-		/// See <see cref="LoggingEvent.FixVolatileData(bool)"/> for more information.
+		/// See <see cref="M:LoggingEvent.FixVolatileData(bool)"/> for more information.
 		/// </para>
 		/// </remarks>
 		[Obsolete("Use Fix property")]
@@ -134,7 +147,7 @@ namespace log4net.Appender
 		#region Override implementation of AppenderSkeleton
 
 		/// <summary>
-		/// This method is called by the <see cref="AppenderSkeleton.DoAppend(LoggingEvent)"/> method. 
+		/// This method is called by the <see cref="M:AppenderSkeleton.DoAppend(LoggingEvent)"/> method. 
 		/// </summary>
 		/// <param name="loggingEvent">the event to log</param>
 		/// <remarks>
@@ -147,7 +160,10 @@ namespace log4net.Appender
 			// volatile data in the event.
 			loggingEvent.Fix = this.Fix;
 
-			m_eventsList.Add(loggingEvent);
+            lock (m_eventsList.SyncRoot)
+            {
+                m_eventsList.Add(loggingEvent);
+            }
 		} 
 
 		#endregion Override implementation of AppenderSkeleton
@@ -162,8 +178,30 @@ namespace log4net.Appender
 		/// </remarks>
 		virtual public void Clear()
 		{
-			m_eventsList.Clear();
+            lock (m_eventsList.SyncRoot)
+            {
+                m_eventsList.Clear();
+            }
 		}
+
+        /// <summary>
+        /// Gets the events that have been logged and clears the list of events.
+        /// </summary>
+        /// <returns>The events that have been logged</returns>
+        /// <remarks>
+        /// <para>
+        /// Gets the events that have been logged and clears the list of events.
+        /// </para>
+        /// </remarks>
+        virtual public LoggingEvent[] PopAllEvents()
+        {
+            lock (m_eventsList.SyncRoot)
+            {
+                LoggingEvent[] tmp = (LoggingEvent[]) m_eventsList.ToArray(typeof (LoggingEvent));
+                m_eventsList.Clear();
+                return tmp;
+            }
+        }
 
 		#endregion Public Instance Methods
 

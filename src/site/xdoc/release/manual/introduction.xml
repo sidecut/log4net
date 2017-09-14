@@ -25,16 +25,14 @@ limitations under the License.
     <meta name="keywords" content="log4net manual, log4net" />
 
     <body>
-        <section id="main" name="log4net Manual - Introduction">
-            <sectionMenu name="Contents" />
-
+        <section id="main" name="Apache log4net&#x2122; Manual - Introduction">
             <section id="overview" name="Overview">
                 <p>
                     This document is based on <i>Short introduction to log4j</i> by <i>Ceki G&#252;lc&#252;</i>.
                 </p>
                 <p>
-                    The log4net framework is based on log4j, see <a href="http://logging.apache.org/log4j">
-                        http://logging.apache.org/log4j</a> for more information on log4j.
+                    The log4net framework is based on Apache log4j&#x2122;, see <a href="http://logging.apache.org/log4j/">
+                        http://logging.apache.org/log4j/</a> for more information on log4j.
                     The log4net framework, source code, binaries, documentation, examples and related 
                     materials are published under the terms of the 
                     <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>, 
@@ -83,12 +81,21 @@ limitations under the License.
                     assembly targeting that framework is built:
                 </p>
                 <ul>
-                    <li>Microsoft .NET Framework 1.0 (1.0.3705)</li>
-                    <li>Microsoft .NET Framework 1.1 (1.1.4322)</li>
+                    <li>.NET Standard 1.3 via .NET Core 1.0</li>
+                    <li>Microsoft&#xae; .NET Framework 1.0</li>
+                    <li>Microsoft .NET Framework 1.1</li>
+                    <li>Microsoft .NET Framework 2.0</li>
+                    <li>Microsoft .NET Framework 3.5</li>
+                    <li>Microsoft .NET Framework 4.0</li>
+                    <li>Microsoft .NET Framework 4.5</li>
+                    <li>Microsoft .NET Framework 3.5 Client Profile</li>
+                    <li>Microsoft .NET Framework 4.0 Client Profile</li>
                     <li>Microsoft .NET Compact Framework 1.0</li>
                     <li>Microsoft .NET Compact Framework 2.0</li>
                     <li>Mono 1.0</li>
                     <li>Mono 2.0</li>
+                    <li>Mono 3.5</li>
+                    <li>Mono 4.0</li>
                     <li>Microsoft Shared Source CLI 1.0</li>
                     <li>CLI 1.0 Compatible</li>
                 </ul>
@@ -290,7 +297,7 @@ namespace log4net
                     </p>
                     <p> </p>
                     <div class="table">
-                        <table cellspacing="0">
+                        <table>
                             <tr>
                                 <th>
                                     Logger name</th>
@@ -332,7 +339,7 @@ namespace log4net
                     </p>
                     <p> </p>
                     <div class="table">
-                        <table cellspacing="0">
+                        <table>
                             <tr>
                                 <th>
                                     Logger name</th>
@@ -369,7 +376,7 @@ namespace log4net
                     </p>
                     <p> </p>
                     <div class="table">
-                        <table cellspacing="0">
+                        <table>
                             <tr>
                                 <th>
                                     Logger name</th>
@@ -418,7 +425,7 @@ namespace log4net
                     </p>
                     <p> </p>
                     <div class="table">
-                        <table cellspacing="0">
+                        <table>
                             <tr>
                                 <th>
                                     Logger name</th>
@@ -563,7 +570,7 @@ ILog y = LogManager.GetLogger("wombat");]]></source>
                         The following appenders are defined in the log4net package:
                     </p>
                     <div class="table">
-                        <table cellspacing="0">
+                        <table>
                             <tr>
                                 <th>
                                     Type</th>
@@ -612,6 +619,12 @@ ILog y = LogManager.GetLogger("wombat");]]></source>
                                 </td>
                             </tr>
                             <tr>
+                              <td><a href="../sdk/log4net.Appender.DebugAppender.html">log4net.Appender.DebugAppender</a></td>
+                              <td>
+                                Writes logging events to the .NET  system.
+                              </td>
+                            </tr>
+                            <tr>
                                 <td><a href="../sdk/log4net.Appender.EventLogAppender.html">log4net.Appender.EventLogAppender</a></td>
                                 <td>
                                     Writes logging events to the Windows Event Log.
@@ -630,7 +643,7 @@ ILog y = LogManager.GetLogger("wombat");]]></source>
                                 </td>
                             </tr>
                             <tr>
-                                <td><a href="../sdk/log4net.Appender.LocalSyslogAppender.html">log4net.LocalSyslogAppender</a></td>
+                                <td><a href="../sdk/log4net.Appender.LocalSyslogAppender.html">log4net.Appender.LocalSyslogAppender</a></td>
                                 <td>
                                     Writes logging events to the local syslog service (UNIX only).
                                 </td>
@@ -758,7 +771,7 @@ ILog y = LogManager.GetLogger("wombat");]]></source>
                         The table below shows an example:
                     </p>
                     <div class="table">
-                        <table cellspacing="0">
+                        <table>
                             <tr>
                                 <th>
                                     Logger Name</th>
@@ -841,7 +854,7 @@ ILog y = LogManager.GetLogger("wombat");]]></source>
                         The following filters are defined in the log4net package:
                     </p>
                     <div class="table">
-                        <table cellspacing="0">
+                        <table>
                             <tr>
                                 <th>
                                     Type</th>
@@ -937,7 +950,7 @@ ILog y = LogManager.GetLogger("wombat");]]></source>
                         The following layouts are included in the log4net package:
                     </p>
                     <div class="table">
-                        <table cellspacing="0">
+                        <table>
                             <tr>
                                 <th>
                                     Type</th>
@@ -1017,6 +1030,11 @@ ILog y = LogManager.GetLogger("wombat");]]></source>
                         Object renderers have to implement the
                         <span class="code">log4net.ObjectRenderer.IObjectRenderer</span>
                         interface.
+                    </p>
+                    <p>
+                        Please note that ObjectRenderers are not used by the <span class="code">DebugFormat</span>,
+                        <span class="code">InfoFormat</span>, <span class="code">WarnFormat</span>,
+                        <span class="code">ErrorFormat</span> and <span class="code">FatalFormat</span> methods.
                     </p>
                 </section>
                 

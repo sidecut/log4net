@@ -66,7 +66,7 @@ namespace log4net.Tests.Appender
 			root.Log(Level.Debug, testMessage, null);
 
 			// Wait for the remoted object to be delivered
-			Thread.Sleep(1000);
+			Thread.Sleep(2000);
 
 			LoggingEvent[] events = RemoteLoggingSinkImpl.Instance.Events;
 			Assert.AreEqual(1, events.Length, "Expect to receive 1 remoted event");
@@ -75,7 +75,7 @@ namespace log4net.Tests.Appender
 		}
 
 		/// <summary>
-		/// Test that the UserName property is not remoted when doing a Fix.Partial
+		/// Test that the LocationInfo property is not remoted when doing a Fix.Partial
 		/// </summary>
 		[Test]
 		public void TestPartialFix()
@@ -92,7 +92,7 @@ namespace log4net.Tests.Appender
 			root.Log(Level.Debug, "test message", null);
 
 			// Wait for the remoted object to be delivered
-			Thread.Sleep(1000);
+			Thread.Sleep(2000);
 
 			LoggingEvent[] events = RemoteLoggingSinkImpl.Instance.Events;
 			Assert.AreEqual(1, events.Length, "Expect to receive 1 remoted event");
@@ -100,11 +100,11 @@ namespace log4net.Tests.Appender
 			// Grab the event data
 			LoggingEventData eventData = GetLoggingEventData(events[0]);
 
-			Assert.IsNull(eventData.UserName, "Expect username to be null because only doing a partial fix");
+			Assert.IsNull(eventData.LocationInfo, "Expect LocationInfo to be null because only doing a partial fix");
 		}
 
 		/// <summary>
-		/// Test that the UserName property is remoted when doing a Fix.All
+		/// Test that the LocationInfo property is remoted when doing a Fix.All
 		/// </summary>
 		[Test]
 		public void TestFullFix()
@@ -121,7 +121,7 @@ namespace log4net.Tests.Appender
 			root.Log(Level.Debug, "test message", null);
 
 			// Wait for the remoted object to be delivered
-			Thread.Sleep(1000);
+			Thread.Sleep(2000);
 
 			LoggingEvent[] events = RemoteLoggingSinkImpl.Instance.Events;
 			Assert.AreEqual(1, events.Length, "Expect to receive 1 remoted event");
@@ -129,7 +129,7 @@ namespace log4net.Tests.Appender
 			// Grab the event data
 			LoggingEventData eventData = GetLoggingEventData(events[0]);
 
-			Assert.IsNotNull(eventData.UserName, "Expect username to not be null because doing a full fix");
+			Assert.IsNotNull(eventData.LocationInfo, "Expect LocationInfo to not be null because doing a full fix");
 		}
 
 		/// <summary>
@@ -156,7 +156,7 @@ namespace log4net.Tests.Appender
 			root.Log(Level.Debug, testMessage, null);
 
 			// Wait for the remoted object to be delivered
-			Thread.Sleep(1000);
+			Thread.Sleep(2000);
 
 			LoggingEvent[] events = RemoteLoggingSinkImpl.Instance.Events;
 			Assert.AreEqual(1, events.Length, "Expect to receive 1 remoted event");
@@ -202,19 +202,27 @@ namespace log4net.Tests.Appender
 		{
 			if (m_remotingChannel == null)
 			{
-				m_remotingChannel = new TcpChannel(8085);
+				BinaryClientFormatterSinkProvider clientSinkProvider = new BinaryClientFormatterSinkProvider();
 
+				BinaryServerFormatterSinkProvider serverSinkProvider = new BinaryServerFormatterSinkProvider();
+				serverSinkProvider.TypeFilterLevel = System.Runtime.Serialization.Formatters.TypeFilterLevel.Full;
+
+				Hashtable channelProperties = new Hashtable();
+				channelProperties["port"] = 8085;
+
+				m_remotingChannel = new TcpChannel(channelProperties, clientSinkProvider, serverSinkProvider);
 				// Setup remoting server
 				try
 				{
-#if NET_2_0 || MONO_2_0
+#if NET_2_0 || MONO_2_0 || MONO_3_5 || MONO_4_0
 					ChannelServices.RegisterChannel(m_remotingChannel, false);
 #else
 					ChannelServices.RegisterChannel(m_remotingChannel);
 #endif
 				}
-				catch(Exception)
+				catch(Exception ex)
 				{
+					Assert.Fail("Failed to set up LoggingSink: {0}", ex);
 				}
 
 				// Marshal the sink object
@@ -222,7 +230,7 @@ namespace log4net.Tests.Appender
 			}
 		}
 
-		/// <summary>
+        /// <summary>
 		/// Shuts down any loggers in the hierarchy, along
 		/// with all appenders.
 		/// </summary>
@@ -253,6 +261,22 @@ namespace log4net.Tests.Appender
 		{
 			ResetRepository();
 		}
+
+        /// <summary>
+        /// Close down remoting infrastructure
+        /// </summary>
+        [TestFixtureTearDown]
+        public void UnregisterRemotingServerChannel() {
+            if (m_remotingChannel != null) {
+                ((TcpChannel) m_remotingChannel).StopListening(null);
+                try {
+                    ChannelServices.UnregisterChannel(m_remotingChannel);
+                }
+                catch (Exception) {
+                }
+                m_remotingChannel = null;
+            }
+        }
 
 		/// <summary>
 		/// Configures the root appender for counting and rolling

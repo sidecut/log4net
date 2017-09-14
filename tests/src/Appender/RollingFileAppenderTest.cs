@@ -31,6 +31,7 @@ using log4net.Repository.Hierarchy;
 using log4net.Util;
 
 using NUnit.Framework;
+using System.Globalization;
 
 namespace log4net.Tests.Appender
 {
@@ -50,7 +51,10 @@ namespace log4net.Tests.Appender
 		private int _MaxSizeRollBackups = 3;
 		private CountingAppender _caRoot;
 		private Logger _root;
-
+#if !NETSTANDARD1_3
+		private CultureInfo _currentCulture;
+		private CultureInfo _currentUICulture;
+#endif
 		private class SilentErrorHandler : IErrorHandler
 		{
 			private StringBuilder m_buffer = new StringBuilder();
@@ -95,9 +99,9 @@ namespace log4net.Tests.Appender
 		private static void ResetAndDeleteTestFiles()
 		{
 			// Regular users should not use the clear method lightly!
-			LogManager.GetRepository().ResetConfiguration();
-			LogManager.GetRepository().Shutdown();
-			((Repository.Hierarchy.Hierarchy)LogManager.GetRepository()).Clear();
+			Utils.GetRepository().ResetConfiguration();
+			Utils.GetRepository().Shutdown();
+			((Repository.Hierarchy.Hierarchy)Utils.GetRepository()).Clear();
 
 			DeleteTestFiles();
 		}
@@ -111,6 +115,13 @@ namespace log4net.Tests.Appender
 		{
 			ResetAndDeleteTestFiles();
 			InitializeVariables();
+
+#if !NETSTANDARD1_3
+			// set correct thread culture
+			_currentCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+			_currentUICulture = System.Threading.Thread.CurrentThread.CurrentUICulture;
+			System.Threading.Thread.CurrentThread.CurrentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
+#endif
 		}
 
 		/// <summary>
@@ -120,6 +131,12 @@ namespace log4net.Tests.Appender
 		public void TearDown()
 		{
 			ResetAndDeleteTestFiles();
+
+#if !NETSTANDARD1_3
+			// restore previous culture
+			System.Threading.Thread.CurrentThread.CurrentCulture = _currentCulture;
+			System.Threading.Thread.CurrentThread.CurrentUICulture = _currentUICulture;
+#endif
 		}
 
 		/// <summary>
@@ -251,6 +268,7 @@ namespace log4net.Tests.Appender
 			RollingFileAppender appender = new RollingFileAppender();
 			appender.Layout = layout;
 			appender.File = c_fileName;
+                        appender.Encoding = Encoding.ASCII;
 			appender.MaximumFileSize = c_iMaximumFileSize.ToString();
 			appender.MaxSizeRollBackups = _MaxSizeRollBackups;
 			appender.CountDirection = _iCountDirection;
@@ -498,16 +516,17 @@ namespace log4net.Tests.Appender
 			}
 		}
 
+        private static readonly int s_Newline_Length = Environment.NewLine.Length;
+
 		/// <summary>
 		/// Returns the number of bytes logged per message, including
-		/// any CR/LF characters in addition to the message length.
+		/// any newline characters in addition to the message length.
 		/// </summary>
 		/// <param name="sMessage"></param>
 		/// <returns></returns>
 		private static int TotalMessageLength(string sMessage)
 		{
-			const int iLengthCRLF = 2;
-			return sMessage.Length + iLengthCRLF;
+            return sMessage.Length + s_Newline_Length;
 		}
 
 		/// <summary>
@@ -1093,7 +1112,7 @@ namespace log4net.Tests.Appender
 		/// </summary>
 		private void ConfigureRootAppender()
 		{
-			_root = ((Repository.Hierarchy.Hierarchy)LogManager.GetRepository()).Root;
+			_root = ((Repository.Hierarchy.Hierarchy)Utils.GetRepository()).Root;
 			_root.Level = Level.Debug;
 			_caRoot = new CountingAppender();
 			_root.AddAppender(_caRoot);
@@ -1383,6 +1402,20 @@ namespace log4net.Tests.Appender
 		/// <returns>A configured ILogger</returns>
 		private static ILogger CreateLogger(string filename, FileAppender.LockingModelBase lockModel, IErrorHandler handler)
 		{
+			return CreateLogger(filename, lockModel, handler, 100000, 0);
+		}
+
+		/// <summary>
+		/// Creates a logger hierarchy, configures a rolling file appender and returns an ILogger
+		/// </summary>
+		/// <param name="filename">The filename to log to</param>
+		/// <param name="lockModel">The locking model to use.</param>
+		/// <param name="handler">The error handler to use.</param>
+		/// <param name="maxFileSize">Maximum file size for roll</param>
+		/// <param name="maxSizeRollBackups">Maximum number of roll backups</param>
+		/// <returns>A configured ILogger</returns>
+		private static ILogger CreateLogger(string filename, FileAppender.LockingModelBase lockModel, IErrorHandler handler, int maxFileSize, int maxSizeRollBackups)
+		{
 			Repository.Hierarchy.Hierarchy h = (Repository.Hierarchy.Hierarchy)LogManager.CreateRepository("TestRepository");
 
 			RollingFileAppender appender = new RollingFileAppender();
@@ -1390,9 +1423,10 @@ namespace log4net.Tests.Appender
 			appender.AppendToFile = false;
 			appender.CountDirection = 0;
 			appender.RollingStyle = RollingFileAppender.RollingMode.Size;
-			appender.MaxFileSize = 100000;
+			appender.MaxFileSize = maxFileSize;
 			appender.Encoding = Encoding.ASCII;
 			appender.ErrorHandler = handler;
+			appender.MaxSizeRollBackups = maxSizeRollBackups;
 			if (lockModel != null)
 			{
 				appender.LockingModel = lockModel;
@@ -1420,12 +1454,16 @@ namespace log4net.Tests.Appender
 			Repository.Hierarchy.Hierarchy h = (Repository.Hierarchy.Hierarchy)LogManager.GetRepository("TestRepository");
 			h.ResetConfiguration();
 			//Replace the repository selector so that we can recreate the hierarchy with the same name if necessary
-			LoggerManager.RepositorySelector = new DefaultRepositorySelector(SystemInfo.GetTypeFromString("log4net.Repository.Hierarchy.Hierarchy", true, true));
+			LoggerManager.RepositorySelector = new DefaultRepositorySelector(typeof(log4net.Repository.Hierarchy.Hierarchy));
 		}
 
 		private static void AssertFileEquals(string filename, string contents)
 		{
+#if NETSTANDARD1_3
+			StreamReader sr = new StreamReader(File.Open(filename, FileMode.Open));
+#else
 			StreamReader sr = new StreamReader(filename);
+#endif
 			string logcont = sr.ReadToEnd();
 			sr.Close();
 
@@ -1528,7 +1566,9 @@ namespace log4net.Tests.Appender
 			DestroyLogger();
 
 			Assert.IsTrue(locked, "File was not locked");
+#if !MONO || MONO_3_5 || MONO_4_0 // at least on Linux with Mono 2.4 exclusive locking doesn't work as one would expect
 			AssertFileEquals(filename, "This is a message" + Environment.NewLine + "This is a message 2" + Environment.NewLine);
+#endif
 			Assert.AreEqual("", sh.Message, "Unexpected error message");
 		}
 
@@ -1578,7 +1618,7 @@ namespace log4net.Tests.Appender
 		}
 
 		/// <summary>
-		/// Verifies that attempting to log to a file with ExclusiveLock really locks the file
+		/// Verifies that attempting to log to a file with MinimalLock doesn't lock the file
 		/// </summary>
 		[Test]
 		public void TestMinimalLockUnlocks()
@@ -1603,7 +1643,97 @@ namespace log4net.Tests.Appender
 			Assert.AreEqual("", sh.Message, "Unexpected error message");
 		}
 
+#if !NETCF
+        /// <summary>
+        /// Verifies that attempting to log to a locked file fails gracefully
+        /// </summary>
+        [Test]
+        public void TestInterProcessLockFails() {
+            String filename = "test.log";
+
+            FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None);
+            fs.Write(Encoding.ASCII.GetBytes("Test"), 0, 4);
+
+            SilentErrorHandler sh = new SilentErrorHandler();
+            ILogger log = CreateLogger(filename, new FileAppender.InterProcessLock(), sh);
+            log.Log(GetType(), Level.Info, "This is a message", null);
+            log.Log(GetType(), Level.Info, "This is a message 2", null);
+            DestroyLogger();
+            fs.Close();
+
+            AssertFileEquals(filename, "Test");
+            Assert.AreEqual("Unable to acquire lock on file", sh.Message.Substring(0, 30), "Expecting an error message");
+        }
+
+        /// <summary>
+        /// Verifies that attempting to log to a locked file recovers if the lock is released
+        /// </summary>
+        [Test]
+        public void TestInterProcessLockRecovers() {
+            String filename = "test.log";
+
+            FileStream fs = new FileStream(filename, FileMode.Create, FileAccess.Write, FileShare.None);
+            fs.Write(Encoding.ASCII.GetBytes("Test"), 0, 4);
+
+            SilentErrorHandler sh = new SilentErrorHandler();
+            ILogger log = CreateLogger(filename, new FileAppender.InterProcessLock(), sh);
+            log.Log(GetType(), Level.Info, "This is a message", null);
+            fs.Close();
+            log.Log(GetType(), Level.Info, "This is a message 2", null);
+            DestroyLogger();
+
+            AssertFileEquals(filename, "This is a message 2" + Environment.NewLine);
+            Assert.AreEqual("Unable to acquire lock on file", sh.Message.Substring(0, 30), "Expecting an error message");
+        }
+
+        /// <summary>
+        /// Verifies that attempting to log to a file with InterProcessLock really locks the file
+        /// </summary>
+        [Test]
+        public void TestInterProcessLockUnlocks() {
+            String filename = "test.log";
+            bool locked;
+
+            SilentErrorHandler sh = new SilentErrorHandler();
+            ILogger log = CreateLogger(filename, new FileAppender.InterProcessLock(), sh);
+            log.Log(GetType(), Level.Info, "This is a message", null);
+
+            locked = true;
+            FileStream fs = new FileStream(filename, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+            fs.Write(Encoding.ASCII.GetBytes("Test" + Environment.NewLine), 0, 4 + Environment.NewLine.Length);
+            fs.Close();
+
+            log.Log(GetType(), Level.Info, "This is a message 2", null);
+            DestroyLogger();
+
+            Assert.IsTrue(locked, "File was not locked");
+            AssertFileEquals(filename, "This is a message" + Environment.NewLine + "Test" + Environment.NewLine + "This is a message 2" + Environment.NewLine);
+            Assert.AreEqual("", sh.Message, "Unexpected error message");
+        }
+
 		/// <summary>
+		/// Verifies that rolling file works
+		/// </summary>
+		[Test]
+		public void TestInterProcessLockRoll()
+		{
+			String filename = "test.log";
+
+			SilentErrorHandler sh = new SilentErrorHandler();
+			ILogger log = CreateLogger(filename, new FileAppender.InterProcessLock(), sh, 1, 2);
+
+			Assert.DoesNotThrow(delegate { log.Log(GetType(), Level.Info, "A", null); });
+			Assert.DoesNotThrow(delegate { log.Log(GetType(), Level.Info, "A", null); });
+			
+			DestroyLogger();
+
+			AssertFileEquals(filename, "A" + Environment.NewLine);
+			AssertFileEquals(filename + ".1", "A" + Environment.NewLine);
+			Assert.IsEmpty(sh.Message);
+		}
+#endif
+
+        /// <summary>
 		/// Verify that the default LockModel is ExclusiveLock, to maintain backwards compatibility with previous behaviour
 		/// </summary>
 		[Test]
@@ -1617,7 +1747,7 @@ namespace log4net.Tests.Appender
 			Assert.AreEqual(1, appenders.Length, "The wrong number of appenders are configured");
 
 			RollingFileAppender rfa = (RollingFileAppender)(appenders[0]);
-			Assert.AreEqual(SystemInfo.GetTypeFromString("log4net.Appender.FileAppender+ExclusiveLock", true, true), rfa.LockingModel.GetType(), "The LockingModel is of an unexpected type");
+			Assert.AreEqual(typeof(log4net.Appender.FileAppender.ExclusiveLock), rfa.LockingModel.GetType(), "The LockingModel is of an unexpected type");
 
 			DestroyLogger();
 		}

@@ -25,9 +25,9 @@ limitations under the License.
     <meta name="keywords" content="log4net frequently asked questions, log4net faq, log4net" />
 
     <body>
-        <section id="main" name="Apache log4net Frequently Asked Questions">
-            <sectionMenu name="Contents" />
-            
+      <a name="top">
+      </a>
+        <section id="main" name="Apache log4net&#x2122; Frequently Asked Questions">
             <section id="information" name="Information">
             
                 <section id="what-is-log4net" name="What is log4net?">
@@ -88,7 +88,7 @@ limitations under the License.
                     <p>
                         log4net runs on many different frameworks and each framework has its own requirements.
                         As a rule of thumb you will need an ECMA-335 compliant CLI runtime, for example, 
-                        the Microsoft .NET runtime 1.0 (1.0.3705) or 1.1 (1.1.4322).
+                        the Microsoft&#xae; .NET runtime 1.0 (1.0.3705) or 1.1 (1.1.4322).
                     </p>
                     <p>
                         Not all frameworks are created equal and some features have been excluded from 
@@ -138,7 +138,7 @@ limitations under the License.
                             log4net supports multiple output appenders per logger.</li>
                     </ul>
                     <p>
-                        See the <a href="../features.html">features</a> overview document for more information on the features of log4net.
+                        See the <a href="features.html">features</a> overview document for more information on the features of log4net.
                     </p>
                 </section>
                 <p><a href="#top">Back to Top</a></p>
@@ -261,17 +261,9 @@ limitations under the License.
                 <p><a href="#top">Back to Top</a></p>
                 
 
-                <section id="bug-fixes" name="How fast do bugs in log4net get fixed?">
-                    <p>
-                        As fast as they get reported ;-)
-                    </p>
-                </section>
-                <p><a href="#top">Back to Top</a></p>
-
-
                 <section id="history" name="What is the history of log4net?">
                     <p>
-                        log4net is a port of the popular <a href="http://logging.apache.org/log4j/">log4j</a> logging library.
+                        log4net is a port of the popular <a href="http://logging.apache.org/log4j/">Apache log4j&#x2122;</a> logging library.
                         The initial port was done in June 2001, since then we have tried to remain in the
                         spirit of the original log4j. See the log4net <a href="../history.html">history</a> page for more details.
                     </p>
@@ -286,6 +278,82 @@ limitations under the License.
                 </section>
                 <p><a href="#top">Back to Top</a></p>
                 
+                <section id="two-snks"
+                         name="Why are there two different strong name keys?">
+                  <p>
+                    Starting with log4net 1.2.11 there are two
+                    different binary distributions,
+                    <code>oldkey</code> and <code>newkey</code>.
+                  </p>
+
+                  <p>
+                    The <code>oldkey</code> distribution contains
+                    assemblies signed with the same strong name key
+                    that was used to sign the assemblies of log4net
+                    1.2.10 and earlier.  This strong name key is only
+                    available to log4net developers.
+                  </p>
+
+                  <p>
+                    The <code>newkey</code> distribution contains
+                    assemblies signed with the strong name key
+                    available from <a
+                    href="https://svn.apache.org/repos/asf/logging/log4net/trunk/log4net.snk">log4net's
+                    svn area</a> or inside the source distribution.
+                    Everybody can create assemblies that have the same
+                    strong name.
+                  </p>
+
+                  <p>
+                    For open source projects it is important that you
+                    can create your own patched version of a product
+                    and use it instead of the official release.  This
+                    is something that is now possible if the
+                    <code>newkey</code> is used throughout.
+                  </p>
+
+                  <p>
+                    The <code>oldkey</code> distribution is mostly
+                    only for people who work with third-party
+                    dependencies that require one of the earlier
+                    releases of log4net and can't be recompiled to use
+                    the new strong name.  If you start a new project
+                    or can recompile all your dependencies we strongly
+                    recommend you use the <code>newkey</code>
+                    assemblies.
+                  </p>
+
+                  <p>
+                    If you are creating an assembly that is likely to
+                    be combined with other assemblies that depend on
+                    the old strong name, then it is better you use the
+                    oldkey assemblies as well.
+                  </p>
+
+                  <p>
+                    We currently plan to distribute the new-key
+                    assembly under a different name while providing
+                    old and newkey <code>log4net.dll</code> assemblies
+                    holding type forwards to the new assembly.  This
+                    may create a cleaner migration path for projects
+                    that have dependencies using both versions.
+                    At the moment such projects will either need to
+                    use the GAC or create sub-directories inside the
+                    application directory and configure assembly
+                    probing with a <code>privatePath</code>.
+                  </p>
+
+                  <p>
+                    Note that the "new" strong name no longer provides
+                    any kind of authenticity.  If you want to be sure
+                    you have the "real" Apache log4net, download the binary
+                    release from one of the mirrors and verify the PGP
+                    signature.
+                  </p>
+
+                </section>
+                <p><a href="#top">Back to Top</a></p>
+
             </section>
 
             <section id="configuration" name="Configuration">
@@ -534,6 +602,18 @@ public class Foo
                     <p>
                         <b>Note:</b> the .NET Compact Framework 1.0 does not support <span class="code">System.Reflection.MethodBase.GetCurrentMethod()</span>.
                     </p>
+
+                    <p>
+                      <b>Note:</b> the two forms are only equivalent
+                      if <span class="code">Foo</span> is not a
+                      generic class.  For a generic class <span
+                      class="code">Foo&lt;T&gt;</span> the variant
+                      using <span class="code">typeof</span> generates
+                      a different logger for each different type
+                      parameter <span class="code">T</span> while the
+                      variant using reflection generates the same
+                      logger for all <span class="code">T</span>s.
+                    </p>
                 </section>
                 <p><a href="#top">Back to Top</a></p>
 
@@ -659,24 +739,70 @@ public class FastLogger
 
 
                 <section id="single-file" name="How do I get multiple process to log to the same file?">
+                  <p>
+                    Before you even start trying any of the
+                    alternatives provided, ask yourself whether you
+                    really need to have multiple processes log to the
+                    same file, then don't do it ;-).
+                  </p>
+
+                  <p>
+                    FileAppender offers pluggable locking models for
+                    this usecase but all existing implementations have
+                    issues and drawbacks.
+                  </p>
+
                     <p>
-                        By default the <span class="code">FileAppender</span> holds an exclusive write 
-                        lock on the log file while it is logging. This prevents other processes from 
-                        writing to the file. The <span class="code">FileAppender</span> can be configured
-                        to use a different locking model, <span class="code">MinimalLock</span>, that
-                        only acquires the write lock while a log is being written. This allows multiple
-                        processes to interleave writes to the same file, albeit with a loss in performance.
-                        See the <a href="config-examples.html#fileappender">FileAppender config examples</a>
-                        for an example <span class="code">MinimalLock</span> configuration.
+                        By default the <span
+                        class="code">FileAppender</span> holds an
+                        exclusive write lock on the log file while it
+                        is logging. This prevents other processes from
+                        writing to the file.  This model is known to
+                        break down with (at least on some versions of)
+                        Mono on Linux and log files may get corrupted
+                        as soon as another process tries to access the
+                        log file.
+                    </p>
+
+                    <p>
+                      <span class="code">MinimalLock</span> only
+                      acquires the write lock while a log is being
+                      written. This allows multiple processes to
+                      interleave writes to the same file, albeit with
+                      a considerable loss in performance.
                     </p>
                     <p>
-                        While the <span class="code">MinimalLock</span> model may be used to interleave
-                        writes to a single file it may not be the optimal solution, especially when
-                        logging from multiple machines. Alternatively you may have one or more processes
-                        log to <span class="code">RemotingAppenders</span>. 
-                        Using the <span class="code">RemoteLoggingServerPlugin</span> (or 
-                        <span class="code">IRemoteLoggingSink</span>) a process can receive all the events and 
-                        log them to a single log file.
+                      <span class="code">InterProcessLock</span>
+                      doesn't lock the file at all but synchronizes
+                      using a system wide Mutex.  This will only work
+                      if all processes cooperate (and use the same
+                      locking model).  The acquisition and release of a
+                      Mutex for every log entry to be written will
+                      result in a loss of performance, but the Mutex
+                      is preferable to the use of MinimalLock.
+                    </p>
+                    <p>
+                      If you use <span
+                      class="code">RollingFileAppender</span> things
+                      become even worse as several process may try to
+                      start rolling the log file concurrently.  <span
+                      class="code">RollingFileAppender</span>
+                      completely ignores the locking model when
+                      rolling files, rolling files is simply not
+                      compatible with this scenario.
+                    </p>
+                    <p>
+                        A better alternative is to have your processes
+                        log to <span
+                        class="code">RemotingAppenders</span>.  Using
+                        the <span
+                        class="code">RemoteLoggingServerPlugin</span>
+                        (or <span
+                        class="code">IRemoteLoggingSink</span>) a
+                        process can receive all the events and log
+                        them to a single log file.  One of the
+                        examples shows how to use the <span
+                        class="code">RemoteLoggingServerPlugin</span>.
                     </p>
                 </section>
                 <p><a href="#top">Back to Top</a></p>
@@ -845,6 +971,27 @@ public class FastLogger
                 </section>
                 <p><a href="#top">Back to Top</a></p>
 
+                <section id="trouble-evaluate-configurationerrors-at-runtime" name="How can I evaluate configuration errors at runtime?">
+                    <p>
+                        To prevent silent failure of log4net as reported as <a href="http://issues.apache.org/jira/browse/LOG4NET-342">LOG4NET-342</a>,
+                        log4net supports a way to evaluate if it was configured and also to evaluate messages generated on startup since 1.2.11. To
+						check if log4net was started and configured properly one can check the property 
+						<span class="code">log4net.Repository.ILoggerRepository.Configured</span> and enumerate the configuration messages as follows:
+                    </p>
+                    <div class="syntax">
+                        <pre class="code">
+if(!log4net.LogManager.GetRepository().Configured)
+{
+	// log4net not configured
+	foreach(log4net.Util.LogLog message in log4net.LogManager.GetRepository().ConfigurationMessages.Cast&lt;log4net.Util.LogLog&bg;())
+	{
+		// evaluate configuration message
+	}
+}
+                        </pre>
+                    </div>
+                </section>
+                <p><a href="#top">Back to Top</a></p>
 
                 <section id="trouble-EventLog" name="Why doesn't the EventLogAppender work?">
                     <p>
@@ -924,6 +1071,33 @@ public class FastLogger
                     </p>
                 </section>
                 <p><a href="#top">Back to Top</a></p>
+                
+                
+                <section id="trouble-webapp-stops-logging" name="Why does my ASP.NET web application stop logging when deployed on an IIS?">
+                    <p>
+                        This problem has been reported by several people as issue 
+                        <a href="https://issues.apache.org/jira/browse/LOG4NET-178">LOG4NET-178</a>.
+                        The issue seems to be caused by a broken LOG4NET configuration
+                        or a timing problem caused by an application shutdown event that
+                        floats in late after an application start event and thus LOG4NET
+                        stops logging immediately after it has been started.
+                    </p>
+                    <p>
+                        The first thing step to troubleshoot problems is enabling
+                        the log4net internal debugging features as described
+                        <a href="http://logging.apache.org/log4net/release/faq.html#internalDebug">here</a>
+                        and fix all errors that pop up. If the problem still persists,
+                        <a href="https://issues.apache.org/jira/browse/LOG4NET-178?focusedCommentId=13504094&amp;page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-13504094">this comment</a>
+                        suggests to move the LOG4NET configuration out of the
+                        <span class="code">web.config</span> into a separate file
+                        like <span class="code">log4net.config</span>. Finally,
+                        if both previous steps did not help and the problem still
+                        occurs, you can try to work around the event timing problem
+                        by invoking the configuration call from the class constructor as described in
+                        <a href="https://issues.apache.org/jira/browse/LOG4NET-178?focusedCommentId=13504485&amp;page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-13504485">this comment</a>.
+                    </p>
+                </section>
+                <p><a href="#top">Back to Top</a></p>
 
                 
                 <section id="trouble-db" name="I am having trouble using the AdoNetAppender to connect to my database?">
@@ -943,12 +1117,103 @@ public class FastLogger
 
                 <section id="report-bugs" name="How do I report bugs?">
                     <p>
-                        See the <a href="../support.html">support</a> page for details.
+                      First make sure it really is a bug and not a
+                      usage error.  When in doubt, ask on the <a
+                      href="../mail-lists.html">log4net-user mailing
+                      list</a> first.
+                    </p>
+                    <p>
+                      If you have identified a bug, please report it
+                      via our <a href="../issue-tracking.html">Issue
+                      Tracker</a>.  You may want to check it hasn't
+                      been reported before by searching the existing
+                      issues.
                     </p>
                 </section>
                 <p><a href="#top">Back to Top</a></p>
 
+                <section id="log-early"
+                         name="log4net doesn't log when built in RELEASE mode">
+                    <p>
+                      If you use attributes to configure log4net then
+                      the order by which assemblies are loaded may
+                      determine whether you attributes are used or
+                      not.  Assembly load order may be different in
+                      DEBUG and RELEASE mode.
+                    </p>
 
+                    <p>
+                      As stated in <a
+                      href="manual/configuration.html#attributes">the
+                      manual</a> the attribute will only be read for
+                      the first assembly that tries to use log4net.
+                      So it is important that you obtain your
+                      <code>ILog</code> instance as early as possible.
+                    </p>
+
+                    <p>
+                      For a command line application "as early as
+                      possible" probably is the class holding the
+                      <code>Main</code> method, for a Web-Application
+                      it would be your <code>Global.asax</code> class
+                      and for a Windows Service it would be the class
+                      deriving from <code>ServiceBase</code>.
+                    </p>
+                </section>
+                <p><a href="#top">Back to Top</a></p>
+
+                <section id="no-explicit-configuration"
+                         name="log4net doesn't log at all">
+                    <p>
+                      You may have overlooked initialization code for
+                      log4net in your application. log4net can be
+                      initialized explicitly by calling one of the
+                      configurators
+                      (e.g. <code>BasicConfigurator</code> or
+                      <code>XmlConfigurator</code> in the
+                      <code>log4net.Config</code> namespace, or
+                      implicitly by including the
+                      <code>[XmlConfiguratorAttribute]</code> in the
+                      assembly where log4net is first used.
+                    </p>
+
+                    <p>
+                      See <a href="manual/configuration.html">the
+                      manual</a> for more information.  If you use
+                      attributes to configure log4net then the order
+                      by which assemblies are loaded may determine
+                      whether you attributes are used or not.
+                      Assembly load order may be different in DEBUG
+                      and RELEASE mode.  See also <a
+                      href="#log-early">log4net doesn't log when built
+                      in RELEASE mode</a>.
+                    </p>
+
+                </section>
+                <p><a href="#top">Back to Top</a></p>
+
+                <section id="adonet-doesnt-reconnect"
+                         name="The ADO.NET Appender doesn't reconnect
+                               after a DB failure on .NET 4.5.1">
+                  <p>
+                    Starting with .NET 4.5.1 ADO.NET has added
+                    connection resiliency which is supposed to
+                    re-establish the connection as part if the
+                    framework.  As a result log4net doesn't know the
+                    connection is broken and will never attempt to
+                    re-establish the connection.
+                  </p>
+                  <p>
+                    Unfortunately re-connecting doesn't seem to be
+                    working reliably.  A workaround may be to add
+                    <code>ConnectRetryCount=0</code> to your
+                    connection string.
+                  </p>
+                  <p>
+                      For details see <a
+                      href="https://issues.apache.org/jira/browse/LOG4NET-442">LOG4NET-442</a>
+                    </p>
+                </section>
             </section>
             
             <section id="misc" name="Miscellaneous">
@@ -957,6 +1222,17 @@ public class FastLogger
                     <p>
                         There is a good discussion of this topic on Robert McLaws blog:
                         <a href="http://weblogs.asp.net/rmclaws/archive/2003/11/15/37743.aspx">Building a Better Server Control Experience, Part 2</a>.
+                    </p>
+                </section>
+            
+                <section id="nuget" name="Do you provide a Nuget package?">
+                  <p>
+		    Starting with version 2.0.6 we provide <a
+		    href="https://www.nuget.org/packages/log4net/"
+		    rel="nofollow">Nuget packages</a>. For earlier
+		    versions <a href="http://blog.cincura.net/"
+		    rel="nofollow">Jiří Činčura</a> has kindly created
+		    Nuget packages.
                     </p>
                 </section>
                 <p><a href="#top">Back to Top</a></p>

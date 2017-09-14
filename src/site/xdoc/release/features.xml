@@ -25,10 +25,8 @@ limitations under the License.
     <meta name="keywords" content="log4net features, log4net" />
 
     <body>
-        <section id="main" name="log4net Features">
+        <section id="main" name="Apache log4net&#x2122; Features">
         
-            <sectionMenu name="Contents" />
-
             <section id="overview" name="Overview">
                 <p>
                     log4net is a tool to help the programmer output log statements to a 
@@ -53,15 +51,15 @@ limitations under the License.
             
             <section id="features" name="Features">
                 <ul>
-                    <li><h3>Support for multiple frameworks</h3></li>
-                    <li><h3>Output to multiple logging targets</h3></li>
-                    <li><h3>Hierarchical logging architecture</h3></li>
-                    <li><h3>XML Configuration</h3></li>
-                    <li><h3>Dynamic Configuration</h3></li>
-                    <li><h3>Logging Context</h3></li>
-                    <li><h3>Proven architecture</h3></li>
-                    <li><h3>Modular and extensible design</h3></li>
-                    <li><h3>High performance with flexibility</h3></li>
+                    <li>Support for multiple frameworks</li>
+                    <li>Output to multiple logging targets</li>
+                    <li>Hierarchical logging architecture</li>
+                    <li>XML Configuration</li>
+                    <li>Dynamic Configuration</li>
+                    <li>Logging Context</li>
+                    <li>Proven architecture</li>
+                    <li>Modular and extensible design</li>
+                    <li>High performance with flexibility</li>
                 </ul>
             </section>
 
@@ -71,19 +69,34 @@ limitations under the License.
                     log4net has specific builds for the following frameworks:
                 </p>
                 <ul>
-                    <li>Microsoft .NET Framework 1.0 (1.0.3705)</li>
-                    <li>Microsoft .NET Framework 1.1 (1.1.4322)</li>
-                    <li>Microsoft .NET Framework 2.0 (2.0.50727)</li>
-                    <li>Microsoft .NET Compact Framework 1.0</li>
-                    <!--<li>Microsoft .NET Compact Framework 2.0</li>-->
-                    <li>Mono 1.0</li>
+                    <li>.NET Core 1.0 - using netstandard-1.3</li>
+                    <li>Microsoft&#xae; .NET Framework 1.0<sup><a href="#no-bin-support">*</a></sup></li>
+                    <li>Microsoft .NET Framework 1.1<sup><a href="#no-bin-support">*</a></sup></li>
+                    <li>Microsoft .NET Framework 2.0</li>
+                    <li>Microsoft .NET Framework 3.5</li>
+                    <li>Microsoft .NET Framework 4.0</li>
+                    <li>Microsoft .NET Framework 4.5</li>
+                    <li>Microsoft .NET Framework 3.5 Client Profile</li>
+                    <li>Microsoft .NET Framework 4.0 Client Profile</li>
+                    <li>Microsoft .NET Compact Framework 1.0<sup><a href="#no-bin-support">*</a></sup></li>
+                    <li>Microsoft .NET Compact Framework 2.0<sup><a href="#no-bin-support">*</a></sup></li>
+                    <li>Mono 1.0<sup><a href="#no-bin-support">*</a></sup></li>
                     <li>Mono 2.0</li>
-                    <li>Microsoft Shared Source CLI 1.0</li>
-                    <li>CLI 1.0 Compatible</li>
+                    <li>Mono 3.5</li>
+                    <li>Mono 4.0</li>
+                    <li>Microsoft Shared Source CLI 1.0<sup><a href="#no-bin-support">*</a></sup></li>
+                    <li>CLI 1.0 Compatible<sup><a href="#no-bin-support">*</a></sup></li>
                 </ul>
-                <p>
-                    Note: Due to the .NET frameworks support for backward compatibility 
-                    log4net will run on future versions of the runtimes listed above.
+                <p>The "Client Profile" builds are stripped down
+                versions of the "normal" builds that don't contain any
+                ASP.NET releated code - which for example means the
+                <code>%aspnet-*</code> patterns and the
+                <code>AspNetTraceAppender</code> are not available.</p>
+
+                <p style="font-size:smaller">
+                  <sup><a name="no-bin-support">*</a></sup>Not
+                  supported by the binary release but can be built
+                  from the source release.
                 </p>
             </section>
 
@@ -130,6 +143,12 @@ limitations under the License.
                             <td>
                                 Writes logging events to the application's Console. The events may go to either 
                                 the standard our stream or the standard error stream.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>log4net.Appender.DebugAppender</td>
+                            <td>
+                                Writes logging events to the .NET  system.
                             </td>
                         </tr>
                         <tr>
@@ -198,6 +217,15 @@ limitations under the License.
                             </td>
                         </tr>
                         <tr>
+                            <td>log4net.Appender.SmtpPickupDirAppender</td>
+                            <td>
+                                Sends logging events to an email
+                                address but writes the emails to a
+                                configurable directory rather than
+                                sending them directly via SMTP.
+                            </td>
+                        </tr>
+                        <tr>
                             <td>log4net.Appender.TelnetAppender</td>
                             <td>
                                 Clients connect via Telnet to receive logging events.
@@ -218,7 +246,9 @@ limitations under the License.
                         </tr>
                     </table>
                 </div>
-                <p />
+                <p>A special log4net.Appender.ForwardingAppender can
+                be used to wrap another appender, for example to
+                attach additional filters.</p>
             </section>
 
             <section id="hierarchy" name="Hierarchical logging architecture">
@@ -273,7 +303,7 @@ limitations under the License.
 
             <section id="history" name="Proven architecture">
                 <p>
-                    log4net is based on the highly successful log4j logging library,
+                    log4net is based on the highly successful Apache log4j&#x2122; logging library,
                     in development since 1996. This popular and proven architecture has 
                     so far been ported to 12 languages.
                 </p>

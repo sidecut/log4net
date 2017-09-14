@@ -1,10 +1,11 @@
 #region Copyright & License
 //
-// Copyright 2001-2005 The Apache Software Foundation
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Licensed to the Apache Software Foundation (ASF) under one or more 
+// contributor license agreements. See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership. 
+// The ASF licenses this file to you under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with 
+// the License. You may obtain a copy of the License at
 //
 // http://www.apache.org/licenses/LICENSE-2.0
 //
@@ -38,9 +39,9 @@ namespace log4net.Core
         private int m_interval;
 
         /// <summary>
-        /// The time of last check. This gets updated when the object is created and when the evaluator triggers.
+        /// The UTC time of last check. This gets updated when the object is created and when the evaluator triggers.
         /// </summary>
-        private DateTime m_lasttime;
+        private DateTime m_lastTimeUtc;
 
         /// <summary>
         /// The default time threshold for triggering in seconds. Zero means it won't trigger at all.
@@ -83,7 +84,7 @@ namespace log4net.Core
         public TimeEvaluator(int interval)
         {
             m_interval = interval;
-            m_lasttime = DateTime.Now;
+            m_lastTimeUtc = DateTime.UtcNow;
         }
 
         /// <summary>
@@ -130,11 +131,11 @@ namespace log4net.Core
 
             lock (this) // avoid triggering multiple times
             {
-                TimeSpan passed = DateTime.Now.Subtract(m_lasttime);
+                TimeSpan passed = DateTime.UtcNow.Subtract(m_lastTimeUtc);
 
                 if (passed.TotalSeconds > m_interval)
                 {
-                    m_lasttime = DateTime.Now;
+                    m_lastTimeUtc = DateTime.UtcNow;
                     return true;
                 }
                 else
