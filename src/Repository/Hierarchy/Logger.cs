@@ -432,10 +432,12 @@ namespace log4net.Repository.Hierarchy
 			{
 				log4net.Util.LogLog.Error(declaringType, "Exception while logging", ex);
 			}
+#if !NET_2_0 && !MONO_2_0 && !MONO_3_5 && !MONO_4_0
 			catch
 			{
 				log4net.Util.LogLog.Error(declaringType, "Exception while logging");
 			}
+#endif
 		}
 
 		/// <summary>
@@ -467,10 +469,12 @@ namespace log4net.Repository.Hierarchy
 			{
 				log4net.Util.LogLog.Error(declaringType, "Exception while logging", ex);
 			}
+#if !NET_2_0 && !MONO_2_0 && !MONO_3_5 && !MONO_4_0
 			catch
 			{
 				log4net.Util.LogLog.Error(declaringType, "Exception while logging");
 			}
+#endif
 		}
 
 		/// <summary>
@@ -505,10 +509,12 @@ namespace log4net.Repository.Hierarchy
 			{
 				log4net.Util.LogLog.Error(declaringType, "Exception while logging", ex);
 			}
+#if !NET_2_0 && !MONO_2_0 && !MONO_3_5 && !MONO_4_0
 			catch
 			{
 				log4net.Util.LogLog.Error(declaringType, "Exception while logging");
 			}
+#endif
 			return false;
 		}
 
@@ -593,6 +599,7 @@ namespace log4net.Repository.Hierarchy
 			//
 			if (!m_hierarchy.EmittedNoAppenderWarning && writes == 0) 
 			{
+				m_hierarchy.EmittedNoAppenderWarning = true;
 				LogLog.Debug(declaringType, "No appenders could be found for logger [" + Name + "] repository [" + Repository.Name + "]");
 				LogLog.Debug(declaringType, "Please initialize the log4net system properly.");
 				try
@@ -608,7 +615,6 @@ namespace log4net.Repository.Hierarchy
 				{
 					// Insufficient permissions to display info from the AppDomain
 				}
-				m_hierarchy.EmittedNoAppenderWarning = true;
 			}
 		}
 

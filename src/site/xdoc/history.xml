@@ -25,12 +25,12 @@ limitations under the License.
     <meta name="keywords" content="log4net project history, log4net" />
 
     <body>
-        <section id="main" name="log4net Project History">
+        <section id="main" name="Apache log4net&#x2122; Project History">
 
             <p>
                 The log4net project was started by <a href="http://www.neoworks.com">Neoworks Limited</a> 
                 in June 2001. It was created as an internal project within Neoworks to port the Apache 
-                log4j code base to the Microsoft .NET Framework. The code base was initially branched 
+                log4j&#x2122; code base to the Microsoft&#xae; .NET Framework. The code base was initially branched 
                 from a pre-alpha log4j 1.2.
             </p>
 

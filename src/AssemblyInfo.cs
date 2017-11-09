@@ -39,6 +39,14 @@ using System.Runtime.CompilerServices;
 [assembly: System.Security.AllowPartiallyTrustedCallers]
 #endif
 
+#if (NET_4_0)
+//
+// Allows partial trust applications (e.g. ASP.NET shared hosting) on .NET 4.0 to work
+// given our implementation of ISerializable.
+//
+[assembly: System.Security.SecurityRules(System.Security.SecurityRuleSet.Level1)]
+#endif
+
 //
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
@@ -46,35 +54,51 @@ using System.Runtime.CompilerServices;
 //
 
 #if (CLI_1_0)
-[assembly: AssemblyTitle("log4net for CLI 1.0 Compatible Frameworks")]
+[assembly: AssemblyTitle("Apache log4net for CLI 1.0 Compatible Frameworks")]
 #elif (NET_1_0)
-[assembly: AssemblyTitle("log4net for .NET Framework 1.0")]
+[assembly: AssemblyTitle("Apache log4net for .NET Framework 1.0")]
 #elif (NET_1_1)
-[assembly: AssemblyTitle("log4net for .NET Framework 1.1")]
-#elif (NET_2_0)
-[assembly: AssemblyTitle("log4net for .NET Framework 2.0")]
-#elif (NETCF_1_0)
-[assembly: AssemblyTitle("log4net for .NET Compact Framework 1.0")]
-#elif (NETCF_2_0)
-[assembly: AssemblyTitle("log4net for .NET Compact Framework 2.0")]
-#elif (MONO_1_0)
-[assembly: AssemblyTitle("log4net for Mono 1.0")]
-#elif (MONO_2_0)
-[assembly: AssemblyTitle("log4net for Mono 2.0")]
-#elif (SSCLI_1_0)
-[assembly: AssemblyTitle("log4net for Shared Source CLI 1.0")]
-#elif (CLI_1_0)
-[assembly: AssemblyTitle("log4net for CLI Compatible Frameworks")]
-#elif (NET)
-[assembly: AssemblyTitle("log4net for .NET Framework")]
-#elif (NETCF)
-[assembly: AssemblyTitle("log4net for .NET Compact Framework")]
-#elif (MONO)
-[assembly: AssemblyTitle("log4net for Mono")]
-#elif (SSCLI)
-[assembly: AssemblyTitle("log4net for Shared Source CLI")]
+[assembly: AssemblyTitle("Apache log4net for .NET Framework 1.1")]
+#elif (NET_4_5)
+[assembly: AssemblyTitle("Apache log4net for .NET Framework 4.5")]
+#elif (NET_4_0)
+#if CLIENT_PROFILE
+[assembly: AssemblyTitle("Apache log4net for .NET Framework 4.0 Client Profile")]
 #else
-[assembly: AssemblyTitle("log4net")]
+[assembly: AssemblyTitle("Apache log4net for .NET Framework 4.0")]
+#endif // Client Profile
+#elif (NET_2_0)
+#if CLIENT_PROFILE
+[assembly: AssemblyTitle("Apache log4net for .NET Framework 3.5 Client Profile")]
+#else
+[assembly: AssemblyTitle("Apache log4net for .NET Framework 2.0")]
+#endif // Client Profile
+#elif (NETCF_1_0)
+[assembly: AssemblyTitle("Apache log4net for .NET Compact Framework 1.0")]
+#elif (NETCF_2_0)
+[assembly: AssemblyTitle("Apache log4net for .NET Compact Framework 2.0")]
+#elif (MONO_1_0)
+[assembly: AssemblyTitle("Apache log4net for Mono 1.0")]
+#elif (MONO_2_0)
+[assembly: AssemblyTitle("Apache log4net for Mono 2.0")]
+#elif (MONO_3_5)
+[assembly: AssemblyTitle("Apache log4net for Mono 3.5")]
+#elif (MONO_4_0)
+[assembly: AssemblyTitle("Apache log4net for Mono 4.0")]
+#elif (SSCLI_1_0)
+[assembly: AssemblyTitle("Apache log4net for Shared Source CLI 1.0")]
+#elif (CLI_1_0)
+[assembly: AssemblyTitle("Apache log4net for CLI Compatible Frameworks")]
+#elif (NET)
+[assembly: AssemblyTitle("Apache log4net for .NET Framework")]
+#elif (NETCF)
+[assembly: AssemblyTitle("Apache log4net for .NET Compact Framework")]
+#elif (MONO)
+[assembly: AssemblyTitle("Apache log4net for Mono")]
+#elif (SSCLI)
+[assembly: AssemblyTitle("Apache log4net for Shared Source CLI")]
+#else
+[assembly: AssemblyTitle("Apache log4net")]
 #endif
 
 #if DEBUG
@@ -83,7 +107,6 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyConfiguration("Retail")]
 #endif
 
-[assembly: AssemblyDescription("The Apache Software Foundation log4net Logging Framework")]
 [assembly: AssemblyProduct("log4net")]
 [assembly: AssemblyDefaultAlias("log4net")]
 [assembly: AssemblyCulture("")]		

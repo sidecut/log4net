@@ -94,7 +94,7 @@ namespace log4net.Plugin
 		/// <remarks>
 		/// <para>
 		/// This is the name under which the object is marshaled.
-		/// <see cref="RemotingServices.Marshal(MarshalByRefObject,String,Type)"/>
+		/// <see cref="M:RemotingServices.Marshal(MarshalByRefObject,String,Type)"/>
 		/// </para>
 		/// </remarks>
 		public virtual string SinkUri 
@@ -119,6 +119,9 @@ namespace log4net.Plugin
 		/// This method is called when the plugin is attached to the repository.
 		/// </para>
 		/// </remarks>
+#if NET_4_0 || MONO_4_0
+		[System.Security.SecuritySafeCritical]
+#endif
 		override public void Attach(ILoggerRepository repository)
 		{
 			base.Attach(repository);
@@ -145,7 +148,10 @@ namespace log4net.Plugin
 		/// sink is disconnected.
 		/// </para>
 		/// </remarks>
-		override public void Shutdown()
+#if NET_4_0 || MONO_4_0
+        [System.Security.SecuritySafeCritical]
+#endif
+        override public void Shutdown()
 		{
 			// Stops the sink from receiving messages
 			RemotingServices.Disconnect(m_sink);
@@ -247,7 +253,10 @@ namespace log4net.Plugin
 			/// therefore this implementation returns <c>null</c>.
 			/// </para>
 			/// </remarks>
-			public override object InitializeLifetimeService()
+#if NET_4_0 || MONO_4_0
+            [System.Security.SecurityCritical]
+#endif
+            public override object InitializeLifetimeService()
 			{
 				return null;
 			}

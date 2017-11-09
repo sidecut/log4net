@@ -23,6 +23,11 @@ using log4net.Util;
 
 using NUnit.Framework;
 
+#if NET_4_0 || MONO_4_0
+using System.Linq.Expressions;
+using System.Reflection;
+#endif
+
 namespace log4net.Tests.Util
 {
 	/// <summary>
@@ -31,6 +36,39 @@ namespace log4net.Tests.Util
 	[TestFixture]
 	public class SystemInfoTest
 	{
+
+#if NET_4_0 || MONO_4_0
+		/// <summary>
+		/// It's "does not throw not supported exception" NOT
+		/// "returns 'Dynamic Assembly' string for dynamic assemblies" by purpose.
+		/// <see cref="Assembly.GetCallingAssembly"/> can be JITted and inlined in different release configurations,
+		/// thus we cannot determine what the exact result of this test will be.
+		/// In 'Debug' GetCallingAssembly should return dynamic assembly named: 'Anonymously Hosted DynamicMethods Assembly'
+		/// whereas in 'Release' this will be inlined and the result will be something like 'X:\Y\Z\log4net.Tests.dll'.
+		/// Therefore simple check against dynamic assembly
+		/// in <see cref="SystemInfo.AssemblyLocationInfo"/> to avoid <see cref="NotSupportedException"/> 'Debug' release.
+		/// </summary>
+		[Test]
+		public void TestAssemblyLocationInfoDoesNotThrowNotSupportedExceptionForDynamicAssembly()
+		{
+			var systemInfoAssemblyLocationMethod = GetAssemblyLocationInfoMethodCall();
+
+			Assert.DoesNotThrow(() => systemInfoAssemblyLocationMethod());
+		}
+
+		private static Func<string> GetAssemblyLocationInfoMethodCall()
+		{
+			var method = typeof(SystemInfoTest).GetMethod("TestAssemblyLocationInfoMethod", new Type[0]);
+			var methodCall = Expression.Call(null, method, new Expression[0]);
+			return Expression.Lambda<Func<string>>(methodCall, new ParameterExpression[0]).Compile();
+		}
+
+		public static string TestAssemblyLocationInfoMethod()
+		{
+			return SystemInfo.AssemblyLocationInfo(Assembly.GetCallingAssembly());
+		}
+#endif
+
 		[Test]
 		public void TestGetTypeFromStringFullyQualified()
 		{
@@ -38,6 +76,18 @@ namespace log4net.Tests.Util
 
 			t = SystemInfo.GetTypeFromString("log4net.Tests.Util.SystemInfoTest,log4net.Tests", false, false);
 			Assert.AreSame(typeof(SystemInfoTest), t, "Test explicit case sensitive type load");
+
+			t = SystemInfo.GetTypeFromString("LOG4NET.TESTS.UTIL.SYSTEMINFOTEST,log4net.Tests", false, true);
+			Assert.AreSame(typeof(SystemInfoTest), t, "Test explicit case in-sensitive type load caps");
+
+			t = SystemInfo.GetTypeFromString("log4net.tests.util.systeminfotest,log4net.Tests", false, true);
+			Assert.AreSame(typeof(SystemInfoTest), t, "Test explicit case in-sensitive type load lower");
+		}
+
+                [Test][Platform(Include="Win")]
+		public void TestGetTypeFromStringCaseInsensitiveOnAssemblyName()
+		{
+			Type t;
 
 			t = SystemInfo.GetTypeFromString("LOG4NET.TESTS.UTIL.SYSTEMINFOTEST,LOG4NET.TESTS", false, true);
 			Assert.AreSame(typeof(SystemInfoTest), t, "Test explicit case in-sensitive type load caps");
@@ -67,7 +117,9 @@ namespace log4net.Tests.Util
 			Type t;
 
 			t = SystemInfo.GetTypeFromString("log4net.Util.SystemInfo", false, false);
-			Assert.AreSame(typeof(SystemInfo), t, "Test explicit case sensitive type load");
+			Assert.AreSame(typeof(SystemInfo), t,
+                                       string.Format("Test explicit case sensitive type load found {0} rather than {1}",
+                                                     t.AssemblyQualifiedName, typeof(SystemInfo).AssemblyQualifiedName));
 
 			t = SystemInfo.GetTypeFromString("LOG4NET.UTIL.SYSTEMINFO", false, true);
 			Assert.AreSame(typeof(SystemInfo), t, "Test explicit case in-sensitive type load caps");

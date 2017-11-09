@@ -39,7 +39,7 @@ namespace log4net.Layout
 	/// </summary>
 	/// <remarks>
 	/// <para>
-	/// The goal of this class is to <see cref="PatternLayout.Format(TextWriter,LoggingEvent)"/> a 
+	/// The goal of this class is to <see cref="M:PatternLayout.Format(TextWriter,LoggingEvent)"/> a 
 	/// <see cref="LoggingEvent"/> as a string. The results
 	/// depend on the <i>conversion pattern</i>.
 	/// </para>
@@ -106,26 +106,46 @@ namespace log4net.Layout
 	///     <item>
 	///         <term>aspnet-cache</term>
 	///         <description>
-	///				TODO
+    ///             <para>
+    ///             Used to output all cache items in the case of <b>%aspnet-cache</b> or just one named item if used as <b>%aspnet-cache{key}</b>
+    ///             </para>
+    ///             <para>
+    ///             This pattern is not available for Compact Framework or Client Profile assemblies.
+    ///             </para>
 	///         </description>
 	///     </item>
 	///     <item>
 	///         <term>aspnet-context</term>
 	///         <description>
-	///				TODO
-	///         </description>
+    ///             <para>
+    ///             Used to output all context items in the case of <b>%aspnet-context</b> or just one named item if used as <b>%aspnet-context{key}</b>
+    ///             </para>
+    ///             <para>
+    ///             This pattern is not available for Compact Framework or Client Profile assemblies.
+    ///             </para>
+    ///         </description>
 	///     </item>
 	///     <item>
 	///         <term>aspnet-request</term>
 	///         <description>
-	///				TODO
-	///         </description>
+    ///             <para>
+    ///             Used to output all request parameters in the case of <b>%aspnet-request</b> or just one named param if used as <b>%aspnet-request{key}</b>
+    ///             </para>
+    ///             <para>
+    ///             This pattern is not available for Compact Framework or Client Profile assemblies.
+    ///             </para>
+    ///         </description>
 	///     </item>
 	///     <item>
 	///         <term>aspnet-session</term>
 	///         <description>
-	///				TODO
-	///         </description>
+    ///             <para>
+    ///             Used to output all session items in the case of <b>%aspnet-session</b> or just one named item if used as <b>%aspnet-session{key}</b>
+    ///             </para>
+    ///             <para>
+    ///             This pattern is not available for Compact Framework or Client Profile assemblies.
+    ///             </para>
+    ///         </description>
 	///     </item>
 	///     <item>
 	///         <term>c</term>
@@ -158,7 +178,7 @@ namespace log4net.Layout
 	/// 			</para>
 	/// 			<para>
 	/// 			The date format specifier admits the same syntax as the
-	/// 			time pattern string of the <see cref="DateTime.ToString(string)"/>.
+	/// 			time pattern string of the <see cref="M:DateTime.ToString(string)"/>.
 	/// 			</para>
 	/// 			<para>
 	/// 			For better results it is recommended to use the log4net date
@@ -171,7 +191,7 @@ namespace log4net.Layout
 	/// 			</para>
 	/// 			<para>
 	/// 			These dedicated date formatters perform significantly
-	/// 			better than <see cref="DateTime.ToString(string)"/>.
+	/// 			better than <see cref="M:DateTime.ToString(string)"/>.
 	/// 			</para>
 	///			</description>
 	///		</item>
@@ -446,9 +466,34 @@ namespace log4net.Layout
 	/// 			between braces. For example, <b>%stacktrace{level}</b>.  
 	/// 			If no stack trace level specifier is given then 1 is assumed 
 	/// 			</para>
-	///			</description>
+    /// 			<para>
+    /// 			Output uses the format:
+    /// 			type3.MethodCall3 > type2.MethodCall2 > type1.MethodCall1
+    /// 			</para>
+    ///             <para>
+    ///             This pattern is not available for Compact Framework assemblies.
+    ///             </para>
+    ///			</description>
 	///		</item>
-	///     <item>
+    /// 	<item>
+    ///			<term>stacktracedetail</term> 
+    ///			<description>
+    /// 			<para>
+    /// 			Used to output the stack trace of the logging event
+    /// 			The stack trace level specifier may be enclosed 
+    /// 			between braces. For example, <b>%stacktracedetail{level}</b>.  
+    /// 			If no stack trace level specifier is given then 1 is assumed 
+    /// 			</para>
+    /// 			<para>
+    /// 			Output uses the format:
+    ///             type3.MethodCall3(type param,...) > type2.MethodCall2(type param,...) > type1.MethodCall1(type param,...)
+    /// 			</para>
+    ///             <para>
+    ///             This pattern is not available for Compact Framework assemblies.
+    ///             </para>
+    ///			</description>
+    ///		</item>
+    ///     <item>
 	///         <term>t</term>
 	///         <description>Equivalent to <b>thread</b></description>
 	///     </item>
@@ -530,7 +575,7 @@ namespace log4net.Layout
 	/// 			</para>
 	/// 			<para>
 	/// 			The date format specifier admits the same syntax as the
-	/// 			time pattern string of the <see cref="DateTime.ToString(string)"/>.
+	/// 			time pattern string of the <see cref="M:DateTime.ToString(string)"/>.
 	/// 			</para>
 	/// 			<para>
 	/// 			For better results it is recommended to use the log4net date
@@ -543,7 +588,7 @@ namespace log4net.Layout
 	/// 			</para>
 	/// 			<para>
 	/// 			These dedicated date formatters perform significantly
-	/// 			better than <see cref="DateTime.ToString(string)"/>.
+	/// 			better than <see cref="M:DateTime.ToString(string)"/>.
 	/// 			</para>
 	///			</description>
 	///		</item>
@@ -715,7 +760,7 @@ namespace log4net.Layout
 	/// </note>
 	/// <para>
 	/// Additional pattern converters may be registered with a specific <see cref="PatternLayout"/>
-	/// instance using the <see cref="AddConverter(string, Type)"/> method.
+	/// instance using the <see cref="M:AddConverter(string, Type)"/> method.
 	/// </para>
 	/// </remarks>
 	/// <example>
@@ -816,7 +861,7 @@ namespace log4net.Layout
 
 // .NET Compact Framework 1.0 has no support for ASP.NET
 // SSCLI 1.0 has no support for ASP.NET
-#if !NETCF && !SSCLI 
+#if !NETCF && !SSCLI && !CLIENT_PROFILE
 			s_globalRulesRegistry.Add("aspnet-cache", typeof(AspNetCachePatternConverter));
 			s_globalRulesRegistry.Add("aspnet-context", typeof(AspNetContextPatternConverter));
 			s_globalRulesRegistry.Add("aspnet-request", typeof(AspNetRequestPatternConverter));
@@ -860,8 +905,10 @@ namespace log4net.Layout
 			s_globalRulesRegistry.Add("r", typeof(RelativeTimePatternConverter));
 			s_globalRulesRegistry.Add("timestamp", typeof(RelativeTimePatternConverter));
 			
+#if !NETCF
 			s_globalRulesRegistry.Add("stacktrace", typeof(StackTracePatternConverter));
             s_globalRulesRegistry.Add("stacktracedetail", typeof(StackTraceDetailPatternConverter));
+#endif
 
 			s_globalRulesRegistry.Add("t", typeof(ThreadPatternConverter));
 			s_globalRulesRegistry.Add("thread", typeof(ThreadPatternConverter));
@@ -1078,7 +1125,7 @@ namespace log4net.Layout
 		/// <remarks>
 		/// <para>
 		/// This version of the method is used by the configurator.
-		/// Programmatic users should use the alternative <see cref="AddConverter(string,Type)"/> method.
+		/// Programmatic users should use the alternative <see cref="M:AddConverter(string,Type)"/> method.
 		/// </para>
 		/// </remarks>
 		public void AddConverter(ConverterInfo converterInfo)

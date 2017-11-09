@@ -19,7 +19,7 @@
 
 // .NET Compact Framework 1.0 has no support for ASP.NET
 // SSCLI 1.0 has no support for ASP.NET
-#if !NETCF && !SSCLI 
+#if !NETCF && !SSCLI && !CLIENT_PROFILE
 
 using System.IO;
 using System.Web;
@@ -54,7 +54,17 @@ namespace log4net.Layout.Pattern
 		/// </remarks>
 		protected override void Convert(TextWriter writer, LoggingEvent loggingEvent, HttpContext httpContext)
 		{
-			if (httpContext.Request != null)
+		    HttpRequest request = null;
+		    try {
+			request = httpContext.Request;
+		    } catch (HttpException) {
+			// likely a case of running in IIS integrated mode
+			// when inside an Application_Start event.
+			// treat it like a case of the Request
+			// property returning null
+		    }
+
+			if (request != null)
 			{
 				if (Option != null)
 				{

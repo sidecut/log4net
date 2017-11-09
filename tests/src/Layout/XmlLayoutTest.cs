@@ -29,12 +29,33 @@ using log4net.Tests.Appender;
 using log4net.Util;
 
 using NUnit.Framework;
+using System.Globalization;
 
 namespace log4net.Tests.Layout
 {
 	[TestFixture]
 	public class XmlLayoutTest
 	{
+		private CultureInfo _currentCulture;
+		private CultureInfo _currentUICulture;
+
+		[SetUp]
+		public void SetUp()
+		{
+			// set correct thread culture
+			_currentCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+			_currentUICulture = System.Threading.Thread.CurrentThread.CurrentUICulture;
+			System.Threading.Thread.CurrentThread.CurrentCulture = System.Threading.Thread.CurrentThread.CurrentUICulture = System.Globalization.CultureInfo.InvariantCulture;
+		}
+
+		[TearDown]
+		public void TearDown()
+		{
+			// restore previous culture
+			System.Threading.Thread.CurrentThread.CurrentCulture = _currentCulture;
+			System.Threading.Thread.CurrentThread.CurrentUICulture = _currentUICulture;
+		}
+
 		/// <summary>
 		/// Build a basic <see cref="LoggingEventData"/> object with some default values.
 		/// </summary>
@@ -60,7 +81,7 @@ namespace log4net.Tests.Layout
 		private static string CreateEventNode(string message)
 		{
 			return String.Format("<event logger=\"TestLogger\" timestamp=\"{0}\" level=\"INFO\" thread=\"TestThread\" domain=\"Tests\" identity=\"TestRunner\" username=\"TestRunner\"><message>{1}</message></event>" + Environment.NewLine,
-#if NET_2_0 || MONO_2_0
+#if NET_2_0 || MONO_2_0 || MONO_3_5 || MONO_4_0
 			                     XmlConvert.ToString(DateTime.Today, XmlDateTimeSerializationMode.Local),
 #else
 			                     XmlConvert.ToString(DateTime.Today),
@@ -71,7 +92,7 @@ namespace log4net.Tests.Layout
 		private static string CreateEventNode(string key, string value)
 		{
 			return String.Format("<event logger=\"TestLogger\" timestamp=\"{0}\" level=\"INFO\" thread=\"TestThread\" domain=\"Tests\" identity=\"TestRunner\" username=\"TestRunner\"><message>Test message</message><properties><data name=\"{1}\" value=\"{2}\" /></properties></event>" + Environment.NewLine,
-#if NET_2_0 || MONO_2_0
+#if NET_2_0 || MONO_2_0 || MONO_3_5 || MONO_4_0
 			                     XmlConvert.ToString(DateTime.Today, XmlDateTimeSerializationMode.Local),
 #else
 			                     XmlConvert.ToString(DateTime.Today),
@@ -281,5 +302,64 @@ namespace log4net.Tests.Layout
 
 			Assert.AreEqual(expected, stringAppender.GetString());
 		}
+
+#if NET_4_0 || MONO_4_0
+        [Test]
+        public void BracketsInStackTracesKeepLogWellFormed() {
+            XmlLayout layout = new XmlLayout();
+            StringAppender stringAppender = new StringAppender();
+            stringAppender.Layout = layout;
+
+            ILoggerRepository rep = LogManager.CreateRepository(Guid.NewGuid().ToString());
+            BasicConfigurator.Configure(rep, stringAppender);
+            ILog log1 = LogManager.GetLogger(rep.Name, "TestLogger");
+            Action<int> bar = foo => { 
+                try {
+                    throw new NullReferenceException();
+                } catch (Exception ex) {
+                    log1.Error(string.Format("Error {0}", foo), ex);
+                }
+            };
+            bar(42);
+
+            // really only asserts there is no exception
+            var loggedDoc = new XmlDocument();
+            loggedDoc.LoadXml(stringAppender.GetString());
+        }
+
+        [Test]
+        public void BracketsInStackTracesAreEscapedProperly() {
+            XmlLayout layout = new XmlLayout();
+            StringAppender stringAppender = new StringAppender();
+            stringAppender.Layout = layout;
+
+            ILoggerRepository rep = LogManager.CreateRepository(Guid.NewGuid().ToString());
+            BasicConfigurator.Configure(rep, stringAppender);
+            ILog log1 = LogManager.GetLogger(rep.Name, "TestLogger");
+            Action<int> bar = foo => {
+                try {
+                    throw new NullReferenceException();
+                }
+                catch (Exception ex) {
+                    log1.Error(string.Format("Error {0}", foo), ex);
+                }
+            };
+            bar(42);
+
+            var log = stringAppender.GetString();
+            var startOfExceptionText = log.IndexOf("<exception>", StringComparison.InvariantCulture) + 11;
+            var endOfExceptionText = log.IndexOf("</exception>", StringComparison.InvariantCulture);
+            var sub = log.Substring(startOfExceptionText, endOfExceptionText - startOfExceptionText);
+            if (sub.StartsWith("<![CDATA["))
+            {
+                StringAssert.EndsWith("]]>", sub);
+            }
+            else
+            {
+                StringAssert.DoesNotContain("<", sub);
+                StringAssert.DoesNotContain(">", sub);
+            }
+        }
+#endif
 	}
 }

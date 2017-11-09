@@ -337,7 +337,10 @@ namespace log4net.Appender
 		/// <see cref="ActivateOptions"/> must be called again.
 		/// </para>
 		/// </remarks>
-		public override void ActivateOptions()
+#if NET_4_0 || MONO_4_0
+        [System.Security.SecuritySafeCritical]
+#endif
+        public override void ActivateOptions()
 		{
 			base.ActivateOptions();
 			
@@ -364,7 +367,7 @@ namespace log4net.Appender
 		#region AppenderSkeleton Implementation
 
 		/// <summary>
-		/// This method is called by the <see cref="AppenderSkeleton.DoAppend(LoggingEvent)"/> method.
+		/// This method is called by the <see cref="M:AppenderSkeleton.DoAppend(LoggingEvent)"/> method.
 		/// </summary>
 		/// <param name="loggingEvent">The event to log.</param>
 		/// <remarks>
@@ -375,7 +378,11 @@ namespace log4net.Appender
 		/// The format of the output will depend on the appender's layout.
 		/// </para>
 		/// </remarks>
-		protected override void Append(LoggingEvent loggingEvent) 
+#if NET_4_0 || MONO_4_0
+        [System.Security.SecuritySafeCritical]
+#endif
+        [System.Security.Permissions.SecurityPermission(System.Security.Permissions.SecurityAction.Demand, UnmanagedCode = true)]
+        protected override void Append(LoggingEvent loggingEvent) 
 		{
 			int priority = GeneratePriority(m_facility, GetSeverity(loggingEvent.Level));
 			string message = RenderLoggingEvent(loggingEvent);
@@ -393,7 +400,10 @@ namespace log4net.Appender
 		/// Close the syslog when the appender is closed
 		/// </para>
 		/// </remarks>
-		protected override void OnClose()
+#if NET_4_0 || MONO_4_0
+        [System.Security.SecuritySafeCritical]
+#endif
+        protected override void OnClose()
 		{
 			base.OnClose();
 

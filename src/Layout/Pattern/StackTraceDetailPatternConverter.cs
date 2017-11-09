@@ -1,3 +1,25 @@
+/*
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ *
+*/
+#if !NETCF
+
 using System;
 using System.Collections;
 using System.Text;
@@ -19,14 +41,14 @@ namespace log4net.Layout.Pattern
     /// <author>Adam Davies</author>
     internal class StackTraceDetailPatternConverter : StackTracePatternConverter
     {
-        internal override string GetMethodInformation(System.Reflection.MethodBase method)
+        internal override string GetMethodInformation(MethodItem method)
         {
             string returnValue="";
 
             try
             {
                 string param = "";
-                string[] names = GetMethodParameterNames(method);
+                string[] names = method.Parameters;
                 StringBuilder sb = new StringBuilder();
                 if (names != null && names.GetUpperBound(0) > 0)
                 {
@@ -52,28 +74,6 @@ namespace log4net.Layout.Pattern
             return returnValue;
         }
 
-        private string[] GetMethodParameterNames(System.Reflection.MethodBase methodBase)
-        {
-            ArrayList methodParameterNames = new ArrayList();
-            try
-            {
-                System.Reflection.ParameterInfo[] methodBaseGetParameters = methodBase.GetParameters();
-                
-                int methodBaseGetParametersCount = methodBaseGetParameters.GetUpperBound(0);
-
-                for (int i = 0; i <= methodBaseGetParametersCount; i++)
-                {
-                    methodParameterNames.Add(methodBaseGetParameters[i].ParameterType + " " + methodBaseGetParameters[i].Name);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogLog.Error(declaringType, "An exception ocurred while retreiving method parameters.", ex);
-            }
-
-            return (string[])methodParameterNames.ToArray(typeof (string));
-        }
-
         #region Private Static Fields
 
         /// <summary>
@@ -88,3 +88,4 @@ namespace log4net.Layout.Pattern
         #endregion Private Static Fields
     }
 }
+#endif

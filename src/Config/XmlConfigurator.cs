@@ -728,7 +728,13 @@ namespace log4net.Config
 #elif NET_2_0
 					// Allow the DTD to specify entity includes
 					XmlReaderSettings settings = new XmlReaderSettings();
+                                        // .NET 4.0 warning CS0618: 'System.Xml.XmlReaderSettings.ProhibitDtd'
+                                        // is obsolete: 'Use XmlReaderSettings.DtdProcessing property instead.'
+#if !NET_4_0 && !MONO_4_0
 					settings.ProhibitDtd = false;
+#else
+					settings.DtdProcessing = DtdProcessing.Parse;
+#endif
 
 					// Create a reader over the input stream
 					XmlReader xmlReader = XmlReader.Create(configStream, settings);
@@ -798,10 +804,10 @@ namespace log4net.Config
 		/// </para>
 		/// <para>
 		/// For more information on how to configure log4net using
-		/// a separate configuration file, see <see cref="Configure(FileInfo)"/>.
+		/// a separate configuration file, see <see cref="M:Configure(FileInfo)"/>.
 		/// </para>
 		/// </remarks>
-		/// <seealso cref="Configure(FileInfo)"/>
+		/// <seealso cref="M:Configure(FileInfo)"/>
 		static public ICollection ConfigureAndWatch(FileInfo configFile)
 		{
             ArrayList configurationMessages = new ArrayList();
@@ -837,10 +843,10 @@ namespace log4net.Config
         /// </para>
         /// <para>
         /// For more information on how to configure log4net using
-        /// a separate configuration file, see <see cref="Configure(FileInfo)"/>.
+        /// a separate configuration file, see <see cref="M:Configure(FileInfo)"/>.
         /// </para>
         /// </remarks>
-        /// <seealso cref="Configure(FileInfo)"/>
+        /// <seealso cref="M:Configure(FileInfo)"/>
         static public ICollection ConfigureAndWatch(ILoggerRepository repository, FileInfo configFile)
         {
             ArrayList configurationMessages = new ArrayList();
@@ -874,18 +880,18 @@ namespace log4net.Config
                     {
                         // support multiple repositories each having their own watcher
                         ConfigureAndWatchHandler handler =
-                            (ConfigureAndWatchHandler)m_repositoryName2ConfigAndWatchHandler[repository.Name];
+							(ConfigureAndWatchHandler)m_repositoryName2ConfigAndWatchHandler[configFile.FullName];
 
                         if (handler != null)
                         {
-                            m_repositoryName2ConfigAndWatchHandler.Remove(repository.Name);
+							m_repositoryName2ConfigAndWatchHandler.Remove(configFile.FullName);
                             handler.Dispose();
                         }
 
                         // Create and start a watch handler that will reload the
                         // configuration whenever the config file is modified.
                         handler = new ConfigureAndWatchHandler(repository, configFile);
-                        m_repositoryName2ConfigAndWatchHandler[repository.Name] = handler;
+						m_repositoryName2ConfigAndWatchHandler[configFile.FullName] = handler;
                     }
 				}
 				catch(Exception ex)
@@ -957,7 +963,10 @@ namespace log4net.Config
 			/// Initializes a new instance of the <see cref="ConfigureAndWatchHandler" /> class.
 			/// </para>
 			/// </remarks>
-			public ConfigureAndWatchHandler(ILoggerRepository repository, FileInfo configFile)
+#if NET_4_0 || MONO_4_0
+            [System.Security.SecuritySafeCritical]
+#endif
+            public ConfigureAndWatchHandler(ILoggerRepository repository, FileInfo configFile)
 			{
 				m_repository = repository;
 				m_configFile = configFile;
@@ -1034,6 +1043,9 @@ namespace log4net.Config
             /// <summary>
             /// Release the handles held by the watcher and timer.
             /// </summary>
+#if NET_4_0 || MONO_4_0
+            [System.Security.SecuritySafeCritical]
+#endif
             public void Dispose()
             {
                 m_watcher.EnableRaisingEvents = false;

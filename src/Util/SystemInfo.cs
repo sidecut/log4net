@@ -225,7 +225,7 @@ namespace log4net.Util
 			{
 #if NETCF_1_0
 				return System.Threading.Thread.CurrentThread.GetHashCode();
-#elif NET_2_0 || NETCF_2_0 || MONO_2_0
+#elif NET_2_0 || NETCF_2_0 || MONO_2_0 || MONO_3_5 || MONO_4_0
 				return System.Threading.Thread.CurrentThread.ManagedThreadId;
 #else
 				return AppDomain.GetCurrentThreadId();
@@ -263,13 +263,19 @@ namespace log4net.Util
 						// Lookup the host name
 						s_hostName = System.Net.Dns.GetHostName();
 					}
-					catch(System.Net.Sockets.SocketException)
+					catch (System.Net.Sockets.SocketException)
 					{
+						LogLog.Debug(declaringType, "Socket exception occurred while getting the dns hostname. Error Ignored.");
 					}
-					catch(System.Security.SecurityException)
+					catch (System.Security.SecurityException)
 					{
 						// We may get a security exception looking up the hostname
 						// You must have Unrestricted DnsPermission to access resource
+						LogLog.Debug(declaringType, "Security exception occurred while getting the dns hostname. Error Ignored.");
+					}
+					catch (Exception ex)
+					{
+						LogLog.Debug(declaringType, "Some other exception occurred while getting the dns hostname. Error Ignored.", ex);
 					}
 
 					// Get the NETBIOS machine name of the current machine
@@ -295,6 +301,7 @@ namespace log4net.Util
 					if (s_hostName == null || s_hostName.Length == 0)
 					{
 						s_hostName = s_notAvailableText;
+						LogLog.Debug(declaringType, "Could not determine the hostname. Error Ignored. Empty host name will be used");
 					}
 				}
 				return s_hostName;
@@ -450,12 +457,44 @@ namespace log4net.Util
 			{
 				try
 				{
-					// This call requires FileIOPermission for access to the path
-					// if we don't have permission then we just ignore it and
-					// carry on.
-					return myAssembly.Location;
+#if NET_4_0 || MONO_4_0
+					if (myAssembly.IsDynamic)
+					{
+						return "Dynamic Assembly";
+					}
+#else
+					if (myAssembly is System.Reflection.Emit.AssemblyBuilder)
+					{
+						return "Dynamic Assembly";
+					}
+					else if(myAssembly.GetType().FullName == "System.Reflection.Emit.InternalAssemblyBuilder")
+					{
+						return "Dynamic Assembly";
+					}
+#endif
+					else
+					{
+						// This call requires FileIOPermission for access to the path
+						// if we don't have permission then we just ignore it and
+						// carry on.
+						return myAssembly.Location;
+					}
 				}
-				catch(System.Security.SecurityException)
+				catch (NotSupportedException)
+				{
+					// The location information may be unavailable for dynamic assemblies and a NotSupportedException
+					// is thrown in those cases. See: http://msdn.microsoft.com/de-de/library/system.reflection.assembly.location.aspx
+					return "Dynamic Assembly";
+				}
+				catch (TargetInvocationException ex)
+				{
+					return "Location Detect Failed (" + ex.Message + ")";
+				}
+				catch (ArgumentException ex)
+				{
+					return "Location Detect Failed (" + ex.Message + ")";
+				}
+				catch (System.Security.SecurityException)
 				{
 					return "Location Permission Denied";
 				}
@@ -566,7 +605,7 @@ namespace log4net.Util
 		/// <para>
 		/// If the type name is fully qualified, i.e. if contains an assembly name in 
 		/// the type name, the type will be loaded from the system using 
-		/// <see cref="Type.GetType(string,bool)"/>.
+		/// <see cref="M:Type.GetType(string,bool)"/>.
 		/// </para>
 		/// <para>
 		/// If the type name is not fully qualified, it will be loaded from the assembly
@@ -590,7 +629,7 @@ namespace log4net.Util
 		/// <para>
 		/// If the type name is fully qualified, i.e. if contains an assembly name in 
 		/// the type name, the type will be loaded from the system using 
-		/// <see cref="Type.GetType(string,bool)"/>.
+		/// <see cref="M:Type.GetType(string,bool)"/>.
 		/// </para>
 		/// <para>
 		/// If the type name is not fully qualified it will be loaded from the
@@ -615,7 +654,7 @@ namespace log4net.Util
 		/// <para>
 		/// If the type name is fully qualified, i.e. if contains an assembly name in 
 		/// the type name, the type will be loaded from the system using 
-		/// <see cref="Type.GetType(string,bool)"/>.
+		/// <see cref="M:Type.GetType(string,bool)"/>.
 		/// </para>
 		/// <para>
 		/// If the type name is not fully qualified it will be loaded from the specified
@@ -653,17 +692,29 @@ namespace log4net.Util
 
 				if (loadedAssemblies != null)
 				{
+					Type fallback = null;
 					// Search the loaded assemblies for the type
 					foreach (Assembly assembly in loadedAssemblies) 
 					{
-						type = assembly.GetType(typeName, false, ignoreCase);
-						if (type != null)
+						Type t = assembly.GetType(typeName, false, ignoreCase);
+						if (t != null)
 						{
 							// Found type in loaded assembly
 							LogLog.Debug(declaringType, "Loaded type ["+typeName+"] from assembly ["+assembly.FullName+"] by searching loaded assemblies.");
-							return type;
+                                                        if (assembly.GlobalAssemblyCache)
+                                                        {
+                                                            fallback = t;
+                                                        }
+                                                        else
+                                                        {
+                                                            return t;
+                                                        }
 						}
 					}
+                                        if (fallback != null)
+                                        {
+                                            return fallback;
+                                        }
 				}
 
 				// Didn't find the type
@@ -835,7 +886,55 @@ namespace log4net.Util
 #endif
 		}
 
-		/// <summary>
+        /// <summary>
+        /// Parse a string into an <see cref="Int16"/> value
+        /// </summary>
+        /// <param name="s">the string to parse</param>
+        /// <param name="val">out param where the parsed value is placed</param>
+        /// <returns><c>true</c> if the string was able to be parsed into an integer</returns>
+        /// <remarks>
+        /// <para>
+        /// Attempts to parse the string into an integer. If the string cannot
+        /// be parsed then this method returns <c>false</c>. The method does not throw an exception.
+        /// </para>
+        /// </remarks>
+        public static bool TryParse(string s, out short val)
+        {
+#if NETCF
+			val = 0;
+			try
+			{
+				val = short.Parse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
+				return true;
+			}
+			catch
+			{
+			}
+
+			return false;
+#else
+            // Initialise out param
+            val = 0;
+
+            try 
+            {
+                double doubleVal;
+                if (Double.TryParse(s, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out doubleVal))
+                {
+                    val = Convert.ToInt16(doubleVal);
+                    return true;
+                }
+            }
+            catch
+            {
+                // Ignore exception, just return false
+            }
+
+            return false;
+#endif
+        }
+
+        /// <summary>
 		/// Lookup an application setting
 		/// </summary>
 		/// <param name="key">the application settings key to lookup</param>
@@ -928,7 +1027,7 @@ namespace log4net.Util
 		{
 #if NETCF_1_0
 			return new Hashtable(CaseInsensitiveHashCodeProvider.Default, CaseInsensitiveComparer.Default);
-#elif NETCF_2_0 || NET_2_0 || MONO_2_0
+#elif NETCF_2_0 || NET_2_0 || MONO_2_0 || MONO_3_5 || MONO_4_0
 			return new Hashtable(StringComparer.OrdinalIgnoreCase);
 #else
 			return System.Collections.Specialized.CollectionsUtil.CreateCaseInsensitiveHashtable();
